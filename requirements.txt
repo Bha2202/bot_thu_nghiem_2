@@ -8,3 +8,4 @@ vnstock3==3.2.1
 python-socketio==5.17.0
 websocket-client==1.9.2
 python-telegram-bot[job-queue]
+ta
