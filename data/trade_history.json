@@ -1,0 +1,722 @@
+[
+  {
+    "ticker": "AAA",
+    "entry_price": 7710.0,
+    "entry_date": "2026-09-21",
+    "stop_loss": 7307.8,
+    "take_profit": 8514.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SBL",
+    "entry_price": 7000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 6016.7,
+    "take_profit": 8966.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "PAT",
+    "entry_price": 72000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 68406.1,
+    "take_profit": 79187.7,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VTO",
+    "entry_price": 10550.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 10175.3,
+    "take_profit": 11299.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "QNW",
+    "entry_price": 18000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 16620.8,
+    "take_profit": 20758.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "PEN",
+    "entry_price": 10500.0,
+    "entry_date": "2026-06-02",
+    "stop_loss": 9718.9,
+    "take_profit": 12062.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "MCH",
+    "entry_price": 143000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 138479.1,
+    "take_profit": 152041.8,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "TLG",
+    "entry_price": 54300.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 51739.5,
+    "take_profit": 59421.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VNB",
+    "entry_price": 17000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 15065.3,
+    "take_profit": 20869.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "QTC",
+    "entry_price": 31500.0,
+    "entry_date": "2026-09-17",
+    "stop_loss": 28245.9,
+    "take_profit": 38008.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HHP",
+    "entry_price": 17200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 16381.3,
+    "take_profit": 18837.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HTT",
+    "entry_price": 1700.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 1339.3,
+    "take_profit": 2421.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "YBM",
+    "entry_price": 9970.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 9135.5,
+    "take_profit": 11639.0,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VIC",
+    "entry_price": 241200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 225591.3,
+    "take_profit": 272417.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "DHM",
+    "entry_price": 6900.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 6280.8,
+    "take_profit": 8138.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "LPT",
+    "entry_price": 7900.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 7488.4,
+    "take_profit": 8723.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "AST",
+    "entry_price": 63700.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 60646.5,
+    "take_profit": 69806.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SSB",
+    "entry_price": 24100.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 22216.0,
+    "take_profit": 27867.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "D2D",
+    "entry_price": 30600.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 29248.4,
+    "take_profit": 33303.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VNM",
+    "entry_price": 61200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 58874.1,
+    "take_profit": 65851.8,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VDN",
+    "entry_price": 47100.0,
+    "entry_date": "2026-09-17",
+    "stop_loss": 38914.9,
+    "take_profit": 63470.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "L63",
+    "entry_price": 9500.0,
+    "entry_date": "2026-09-17",
+    "stop_loss": 9149.3,
+    "take_profit": 10201.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "AMC",
+    "entry_price": 12600.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 11920.2,
+    "take_profit": 13959.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "TTC",
+    "entry_price": 9100.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 8057.0,
+    "take_profit": 11186.0,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "KGM",
+    "entry_price": 5500.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 5340.9,
+    "take_profit": 5818.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "FSO",
+    "entry_price": 9500.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 8617.8,
+    "take_profit": 11264.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "IFS",
+    "entry_price": 17200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 16431.7,
+    "take_profit": 18736.6,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "DGT",
+    "entry_price": 3900.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 3519.3,
+    "take_profit": 4661.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "PIT",
+    "entry_price": 11800.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 11103.6,
+    "take_profit": 13192.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SDC",
+    "entry_price": 6900.0,
+    "entry_date": "2026-07-09",
+    "stop_loss": 6361.3,
+    "take_profit": 7977.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HDP",
+    "entry_price": 26800.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 25803.8,
+    "take_profit": 28792.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VGL",
+    "entry_price": 20500.0,
+    "entry_date": "2026-08-03",
+    "stop_loss": 19586.8,
+    "take_profit": 22326.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HID",
+    "entry_price": 5650.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 5133.9,
+    "take_profit": 6682.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HCC",
+    "entry_price": 22900.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 21904.9,
+    "take_profit": 24890.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VIM",
+    "entry_price": 10000.0,
+    "entry_date": "2026-09-16",
+    "stop_loss": 9056.5,
+    "take_profit": 11887.0,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "POS",
+    "entry_price": 14800.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 13960.5,
+    "take_profit": 16478.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "PTO",
+    "entry_price": 20000.0,
+    "entry_date": "2026-05-18",
+    "stop_loss": 17306.1,
+    "take_profit": 25387.8,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VCX",
+    "entry_price": 12000.0,
+    "entry_date": "2026-08-26",
+    "stop_loss": 10251.7,
+    "take_profit": 15496.7,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "LMC",
+    "entry_price": 8000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 6566.2,
+    "take_profit": 10867.6,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HTL",
+    "entry_price": 22000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 21185.3,
+    "take_profit": 23629.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VDL",
+    "entry_price": 12000.0,
+    "entry_date": "2026-09-17",
+    "stop_loss": 10963.4,
+    "take_profit": 14073.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "PGS",
+    "entry_price": 76800.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 64574.1,
+    "take_profit": 101251.7,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "KLB",
+    "entry_price": 12800.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 12052.9,
+    "take_profit": 14294.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "TPC",
+    "entry_price": 13450.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 12400.2,
+    "take_profit": 15549.6,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "NSS",
+    "entry_price": 3700.0,
+    "entry_date": "2024-10-23",
+    "stop_loss": 3523.5,
+    "take_profit": 4053.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SBT",
+    "entry_price": 23200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 22371.1,
+    "take_profit": 24857.7,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SVD",
+    "entry_price": 4750.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 4082.5,
+    "take_profit": 6085.0,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VPB",
+    "entry_price": 27450.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 26053.2,
+    "take_profit": 30243.6,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "CLM",
+    "entry_price": 56800.0,
+    "entry_date": "2026-09-15",
+    "stop_loss": 54531.4,
+    "take_profit": 61337.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VPL",
+    "entry_price": 81200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 75366.3,
+    "take_profit": 92867.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HDB",
+    "entry_price": 27500.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 26370.3,
+    "take_profit": 29759.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "NUE",
+    "entry_price": 10000.0,
+    "entry_date": "2026-09-14",
+    "stop_loss": 9215.2,
+    "take_profit": 12580.0,
+    "rr_ratio": 3.29,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SVN",
+    "entry_price": 4400.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 3874.6,
+    "take_profit": 5450.8,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "TNW",
+    "entry_price": 13800.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 13038.3,
+    "take_profit": 15323.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "BSR",
+    "entry_price": 30200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 27912.9,
+    "take_profit": 34774.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "BIG",
+    "entry_price": 5400.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 4784.9,
+    "take_profit": 6630.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SSI",
+    "entry_price": 21400.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 20258.6,
+    "take_profit": 23682.8,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "S55",
+    "entry_price": 66000.0,
+    "entry_date": "2026-09-07",
+    "stop_loss": 58508.2,
+    "take_profit": 80983.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "APH",
+    "entry_price": 7390.0,
+    "entry_date": "2026-09-21",
+    "stop_loss": 6940.1,
+    "take_profit": 8289.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "CIG",
+    "entry_price": 7210.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 6432.5,
+    "take_profit": 8765.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "STB",
+    "entry_price": 78200.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 74619.0,
+    "take_profit": 85361.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "DCL",
+    "entry_price": 40500.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 37617.0,
+    "take_profit": 46265.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "THN",
+    "entry_price": 5600.0,
+    "entry_date": "2026-09-08",
+    "stop_loss": 5345.2,
+    "take_profit": 6109.6,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "NAC",
+    "entry_price": 1300.0,
+    "entry_date": "2025-07-23",
+    "stop_loss": 1198.3,
+    "take_profit": 1503.3,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "MEF",
+    "entry_price": 2100.0,
+    "entry_date": "2026-05-05",
+    "stop_loss": 1924.3,
+    "take_profit": 2451.5,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "TAW",
+    "entry_price": 21300.0,
+    "entry_date": "2026-07-15",
+    "stop_loss": 20028.4,
+    "take_profit": 23843.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "STS",
+    "entry_price": 134200.0,
+    "entry_date": "2026-06-23",
+    "stop_loss": 122172.0,
+    "take_profit": 158256.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VOS",
+    "entry_price": 11950.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 11198.9,
+    "take_profit": 13452.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VNX",
+    "entry_price": 400.0,
+    "entry_date": "2026-07-28",
+    "stop_loss": 385.5,
+    "take_profit": 428.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "NDW",
+    "entry_price": 19400.0,
+    "entry_date": "2026-08-06",
+    "stop_loss": 18695.1,
+    "take_profit": 20809.9,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "VEA",
+    "entry_price": 37000.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 35962.9,
+    "take_profit": 39074.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "PTH",
+    "entry_price": 12000.0,
+    "entry_date": "2026-07-06",
+    "stop_loss": 11585.7,
+    "take_profit": 12828.7,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "DP3",
+    "entry_price": 61500.0,
+    "entry_date": "2026-09-18",
+    "stop_loss": 59057.4,
+    "take_profit": 66385.2,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HHB",
+    "entry_price": 30000.0,
+    "entry_date": "2026-08-13",
+    "stop_loss": 29759.4,
+    "take_profit": 30481.1,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "SPC",
+    "entry_price": 10000.0,
+    "entry_date": "2026-08-26",
+    "stop_loss": 9170.9,
+    "take_profit": 12100.0,
+    "rr_ratio": 2.53,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "MBB",
+    "entry_price": 20200.0,
+    "entry_date": "2026-09-22",
+    "stop_loss": 19400.8,
+    "take_profit": 21798.4,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "HPG",
+    "entry_price": 21550.0,
+    "entry_date": "2026-09-22",
+    "stop_loss": 20657.325516863166,
+    "take_profit": 23335.34896627367,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "ACB",
+    "entry_price": 22400.0,
+    "entry_date": "2026-09-22",
+    "stop_loss": 21552.787660461756,
+    "take_profit": 24094.42467907649,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "AGP",
+    "entry_price": 29300.0,
+    "entry_date": "2026-09-22",
+    "stop_loss": 26370.0,
+    "take_profit": 35160.0,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  },
+  {
+    "ticker": "DRI",
+    "entry_price": 14500.0,
+    "entry_date": "2026-09-23",
+    "stop_loss": 13495.566933832923,
+    "take_profit": 16508.866132334155,
+    "rr_ratio": 2.0,
+    "status": "OPEN"
+  }
+]

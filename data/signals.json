@@ -1,0 +1,714 @@
+[
+  {
+    "ticker": "AAA",
+    "signal_type": "BUY",
+    "price": 7.71,
+    "rsi": 67.5,
+    "volume_ratio": 3.57,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "AAS",
+    "signal_type": "SELL",
+    "price": 9.2,
+    "rsi": 70.3,
+    "volume_ratio": 0.65,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "ABB",
+    "signal_type": "SELL",
+    "price": 17.9,
+    "rsi": 71.7,
+    "volume_ratio": 0.71,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "AMC",
+    "signal_type": "BUY",
+    "price": 12.6,
+    "rsi": 53.9,
+    "volume_ratio": 3.59,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "APH",
+    "signal_type": "BUY",
+    "price": 7.39,
+    "rsi": 81.3,
+    "volume_ratio": 3.42,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "ARM",
+    "signal_type": "SELL",
+    "price": 45.8,
+    "rsi": 92.9,
+    "volume_ratio": 0.12,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "ASP",
+    "signal_type": "SELL",
+    "price": 15.15,
+    "rsi": 73.2,
+    "volume_ratio": 0.96,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "AST",
+    "signal_type": "BUY",
+    "price": 63.7,
+    "rsi": 50.0,
+    "volume_ratio": 1.92,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "BIG",
+    "signal_type": "BUY",
+    "price": 5.4,
+    "rsi": 61.7,
+    "volume_ratio": 2.11,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "BSR",
+    "signal_type": "BUY",
+    "price": 30.2,
+    "rsi": 69.1,
+    "volume_ratio": 1.42,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "CC1",
+    "signal_type": "BUY",
+    "price": 38.1,
+    "rsi": 54.1,
+    "volume_ratio": 1.29,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "CCA",
+    "signal_type": "SELL",
+    "price": 14.5,
+    "rsi": 76.8,
+    "volume_ratio": 0.44,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "CCR",
+    "signal_type": "BUY",
+    "price": 14.2,
+    "rsi": 53.0,
+    "volume_ratio": 1.28,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "CIG",
+    "signal_type": "BUY",
+    "price": 7.21,
+    "rsi": 50.2,
+    "volume_ratio": 2.61,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "CLM",
+    "signal_type": "BUY",
+    "price": 56.8,
+    "rsi": 56.7,
+    "volume_ratio": 2.79,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "D2D",
+    "signal_type": "BUY",
+    "price": 30.6,
+    "rsi": 70.2,
+    "volume_ratio": 1.92,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "DCL",
+    "signal_type": "BUY",
+    "price": 40.5,
+    "rsi": 56.9,
+    "volume_ratio": 2.48,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "DGT",
+    "signal_type": "BUY",
+    "price": 3.9,
+    "rsi": 58.4,
+    "volume_ratio": 1.68,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "DHM",
+    "signal_type": "BUY",
+    "price": 6.9,
+    "rsi": 53.8,
+    "volume_ratio": 1.43,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "DNE",
+    "signal_type": "SELL",
+    "price": 11.0,
+    "rsi": 72.7,
+    "volume_ratio": 0.66,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "DP3",
+    "signal_type": "BUY",
+    "price": 61.5,
+    "rsi": 54.0,
+    "volume_ratio": 1.27,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "FSO",
+    "signal_type": "BUY",
+    "price": 9.5,
+    "rsi": 61.2,
+    "volume_ratio": 1.59,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HCC",
+    "signal_type": "BUY",
+    "price": 22.9,
+    "rsi": 51.6,
+    "volume_ratio": 1.58,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HDB",
+    "signal_type": "BUY",
+    "price": 27.5,
+    "rsi": 56.4,
+    "volume_ratio": 2.34,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HDP",
+    "signal_type": "BUY",
+    "price": 26.8,
+    "rsi": 56.4,
+    "volume_ratio": 2.14,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HHP",
+    "signal_type": "BUY",
+    "price": 17.2,
+    "rsi": 74.3,
+    "volume_ratio": 2.12,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HID",
+    "signal_type": "BUY",
+    "price": 5.65,
+    "rsi": 88.9,
+    "volume_ratio": 2.17,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HLB",
+    "signal_type": "SELL",
+    "price": 688.0,
+    "rsi": 77.4,
+    "volume_ratio": 0.19,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HTL",
+    "signal_type": "BUY",
+    "price": 22.0,
+    "rsi": 59.3,
+    "volume_ratio": 2.36,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HTN",
+    "signal_type": "SELL",
+    "price": 6.81,
+    "rsi": 87.1,
+    "volume_ratio": 0.36,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "HTT",
+    "signal_type": "BUY",
+    "price": 1.7,
+    "rsi": 55.2,
+    "volume_ratio": 2.43,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "IFS",
+    "signal_type": "BUY",
+    "price": 17.2,
+    "rsi": 51.4,
+    "volume_ratio": 2.51,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "KGM",
+    "signal_type": "BUY",
+    "price": 5.5,
+    "rsi": 60.8,
+    "volume_ratio": 4.79,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "KLB",
+    "signal_type": "BUY",
+    "price": 12.8,
+    "rsi": 61.8,
+    "volume_ratio": 4.92,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "L63",
+    "signal_type": "BUY",
+    "price": 9.5,
+    "rsi": 55.7,
+    "volume_ratio": 3.7,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "LGC",
+    "signal_type": "SELL",
+    "price": 64.8,
+    "rsi": 76.6,
+    "volume_ratio": 0.06,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "LMC",
+    "signal_type": "BUY",
+    "price": 8.0,
+    "rsi": 64.0,
+    "volume_ratio": 1.54,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "LPT",
+    "signal_type": "BUY",
+    "price": 7.9,
+    "rsi": 53.4,
+    "volume_ratio": 2.62,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "MCH",
+    "signal_type": "BUY",
+    "price": 143.0,
+    "rsi": 58.9,
+    "volume_ratio": 4.19,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "MSR",
+    "signal_type": "SELL",
+    "price": 47.3,
+    "rsi": 72.0,
+    "volume_ratio": 0.51,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "MTG",
+    "signal_type": "SELL",
+    "price": 10.0,
+    "rsi": 73.4,
+    "volume_ratio": 0.07,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "NUE",
+    "signal_type": "BUY",
+    "price": 10.0,
+    "rsi": 50.4,
+    "volume_ratio": 2.71,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PAT",
+    "signal_type": "BUY",
+    "price": 72.0,
+    "rsi": 76.0,
+    "volume_ratio": 1.63,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PDC",
+    "signal_type": "SELL",
+    "price": 6.3,
+    "rsi": 71.1,
+    "volume_ratio": 0.24,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PEN",
+    "signal_type": "BUY",
+    "price": 10.5,
+    "rsi": 57.9,
+    "volume_ratio": 1.34,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PGS",
+    "signal_type": "BUY",
+    "price": 76.8,
+    "rsi": 65.1,
+    "volume_ratio": 2.27,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PIT",
+    "signal_type": "BUY",
+    "price": 11.8,
+    "rsi": 88.5,
+    "volume_ratio": 18.05,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PMT",
+    "signal_type": "SELL",
+    "price": 8.5,
+    "rsi": 88.0,
+    "volume_ratio": 0.04,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "POS",
+    "signal_type": "BUY",
+    "price": 14.8,
+    "rsi": 53.0,
+    "volume_ratio": 1.63,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "POV",
+    "signal_type": "BUY",
+    "price": 7.7,
+    "rsi": 60.3,
+    "volume_ratio": 1.21,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PPE",
+    "signal_type": "SELL",
+    "price": 19.0,
+    "rsi": 80.0,
+    "volume_ratio": 0.5,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "PTO",
+    "signal_type": "BUY",
+    "price": 20.0,
+    "rsi": 55.9,
+    "volume_ratio": 3.93,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "QNS",
+    "signal_type": "SELL",
+    "price": 49.8,
+    "rsi": 73.2,
+    "volume_ratio": 0.25,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "QNW",
+    "signal_type": "BUY",
+    "price": 18.0,
+    "rsi": 56.5,
+    "volume_ratio": 2.89,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "QTC",
+    "signal_type": "BUY",
+    "price": 31.5,
+    "rsi": 53.0,
+    "volume_ratio": 1.49,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "S55",
+    "signal_type": "BUY",
+    "price": 66.0,
+    "rsi": 55.6,
+    "volume_ratio": 1.35,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SBL",
+    "signal_type": "BUY",
+    "price": 7.0,
+    "rsi": 53.3,
+    "volume_ratio": 1.44,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SBT",
+    "signal_type": "BUY",
+    "price": 23.2,
+    "rsi": 61.0,
+    "volume_ratio": 1.43,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SDC",
+    "signal_type": "BUY",
+    "price": 6.9,
+    "rsi": 62.8,
+    "volume_ratio": 3.4,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SJS",
+    "signal_type": "SELL",
+    "price": 56.7,
+    "rsi": 74.5,
+    "volume_ratio": 0.29,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SPC",
+    "signal_type": "BUY",
+    "price": 10.0,
+    "rsi": 51.1,
+    "volume_ratio": 1.28,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SRF",
+    "signal_type": "SELL",
+    "price": 7.7,
+    "rsi": 70.4,
+    "volume_ratio": 0.03,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SSB",
+    "signal_type": "BUY",
+    "price": 24.1,
+    "rsi": 89.6,
+    "volume_ratio": 3.26,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SSI",
+    "signal_type": "BUY",
+    "price": 21.4,
+    "rsi": 60.4,
+    "volume_ratio": 1.7,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "STB",
+    "signal_type": "BUY",
+    "price": 78.2,
+    "rsi": 61.9,
+    "volume_ratio": 1.42,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SVD",
+    "signal_type": "BUY",
+    "price": 4.75,
+    "rsi": 55.6,
+    "volume_ratio": 1.33,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "SVN",
+    "signal_type": "BUY",
+    "price": 4.4,
+    "rsi": 75.7,
+    "volume_ratio": 2.85,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "TET",
+    "signal_type": "SELL",
+    "price": 50.0,
+    "rsi": 73.0,
+    "volume_ratio": 0.14,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "TLG",
+    "signal_type": "BUY",
+    "price": 54.3,
+    "rsi": 65.8,
+    "volume_ratio": 2.68,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "TNW",
+    "signal_type": "BUY",
+    "price": 13.8,
+    "rsi": 54.4,
+    "volume_ratio": 1.94,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "TPC",
+    "signal_type": "BUY",
+    "price": 13.45,
+    "rsi": 69.4,
+    "volume_ratio": 3.75,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "TTC",
+    "signal_type": "BUY",
+    "price": 9.1,
+    "rsi": 50.4,
+    "volume_ratio": 1.53,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "USD",
+    "signal_type": "SELL",
+    "price": 17.5,
+    "rsi": 73.6,
+    "volume_ratio": 0.35,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VAF",
+    "signal_type": "SELL",
+    "price": 27.0,
+    "rsi": 71.6,
+    "volume_ratio": 0.04,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VCX",
+    "signal_type": "BUY",
+    "price": 12.0,
+    "rsi": 55.9,
+    "volume_ratio": 8.0,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VDL",
+    "signal_type": "BUY",
+    "price": 12.0,
+    "rsi": 59.0,
+    "volume_ratio": 1.78,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VDN",
+    "signal_type": "BUY",
+    "price": 47.1,
+    "rsi": 60.6,
+    "volume_ratio": 1.69,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VEA",
+    "signal_type": "BUY",
+    "price": 37.0,
+    "rsi": 73.4,
+    "volume_ratio": 1.28,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VGL",
+    "signal_type": "BUY",
+    "price": 20.5,
+    "rsi": 73.0,
+    "volume_ratio": 1.7,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VIC",
+    "signal_type": "BUY",
+    "price": 241.2,
+    "rsi": 60.0,
+    "volume_ratio": 2.11,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VIM",
+    "signal_type": "BUY",
+    "price": 10.0,
+    "rsi": 50.3,
+    "volume_ratio": 3.64,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VNB",
+    "signal_type": "BUY",
+    "price": 17.0,
+    "rsi": 67.3,
+    "volume_ratio": 1.75,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VNM",
+    "signal_type": "BUY",
+    "price": 61.2,
+    "rsi": 52.2,
+    "volume_ratio": 1.47,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VOS",
+    "signal_type": "BUY",
+    "price": 11.95,
+    "rsi": 61.7,
+    "volume_ratio": 1.28,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VPB",
+    "signal_type": "BUY",
+    "price": 27.45,
+    "rsi": 56.1,
+    "volume_ratio": 2.4,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VPL",
+    "signal_type": "BUY",
+    "price": 81.2,
+    "rsi": 50.8,
+    "volume_ratio": 3.58,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "VTO",
+    "signal_type": "BUY",
+    "price": 10.55,
+    "rsi": 51.6,
+    "volume_ratio": 3.13,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "XHC",
+    "signal_type": "BUY",
+    "price": 18.5,
+    "rsi": 60.7,
+    "volume_ratio": 1.28,
+    "updated_at": "22:43 - 21/09/2026"
+  },
+  {
+    "ticker": "YBM",
+    "signal_type": "BUY",
+    "price": 9.97,
+    "rsi": 50.4,
+    "volume_ratio": 1.74,
+    "updated_at": "22:43 - 21/09/2026"
+  }
+]

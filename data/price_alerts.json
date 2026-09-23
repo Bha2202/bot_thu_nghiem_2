@@ -1,0 +1,9 @@
+[
+  {
+    "chat_id": 8418008858,
+    "ticker": "DRI",
+    "operator": ">",
+    "target_price": 100000.0,
+    "created_at": "2026-09-22 15:14"
+  }
+]

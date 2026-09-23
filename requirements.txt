@@ -1,0 +1,9 @@
+requests==2.34.2
+aiohttp
+websockets==17.1
+pandas==2.3.3
+python-dotenv
+vnstock==4.0.8
+vnstock3==3.2.1
+python-socketio==5.17.0
+websocket-client==1.9.2
