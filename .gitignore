@@ -217,7 +217,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 # Local database
-*.db
+#*.db
 
 # Generated local data
 data/history_failed_symbols.csv
