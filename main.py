@@ -294,7 +294,7 @@ async def post_init_setup(application: Application):
 
         application.job_queue.run_once(
             update_history_job,
-            when=60
+            when=10
         )
 
 
