@@ -77,28 +77,68 @@ def _normalize_price(price: float) -> float:
 # ----------------------------------------------------
 # 1. HÀM TRUY XUẤT DỮ LIỆU CƠ BẢN (FA & COMPANY)
 # ----------------------------------------------------
-def get_company_info(ticker: str) -> dict:
-    """Lấy thông tin cơ bản doanh nghiệp từ SSI iBoard API."""
-    try:
-        url = f"https://iboard-api.ssi.com.vn/statistics/company/ssmi/company-profile?symbol={ticker.upper()}&language=vn"
-        r = requests.get(url, headers=SSI_HEADERS, timeout=3)
-        data = r.json().get('data', {})
-        return {
-            'name': data.get('companyName', ticker),
-            'exchange': data.get('exchange', 'HOSE'),
-            'sector': data.get('sector', 'Chưa xác định'),
-            'sub_sector': data.get('subSector', 'Chưa xác định'),
-            'market_cap': _safe_float(data.get('listedValue', 0)) / 1e9
-        }
-    except Exception:
-        return {
-            'name': ticker, 
-            'exchange': 'HOSE', 
-            'sector': 'Chưa xác định', 
-            'sub_sector': 'Chưa xác định',
-            'market_cap': 0
-        }
+def get_company_info(ticker: str, current_price: float = 0) -> dict:
+    """Lấy thông tin DN và tự tính Vốn hóa nếu API trả về 0 hoặc N/A."""
+    ticker_upper = ticker.upper()
+    sector = "Khác"
+    comp_name = ticker_upper
+    market_cap = 0
 
+    # 1. THỬ LẤY TỪ SSI IBOARD
+    try:
+        url = f"https://iboard-api.ssi.com.vn/statistics/company/ssmi/company-profile?symbol={ticker_upper}&language=vn"
+        r = requests.get(url, headers=SSI_HEADERS, timeout=5)
+        if r.status_code == 200:
+            data = r.json().get('data', {})
+            if data:
+                sector = data.get('sector') or data.get('industryName') or data.get('icbName') or 'Khác'
+                comp_name = data.get('companyName', ticker_upper)
+                
+                # Lấy số cổ phiếu lưu hành (shares) hoặc marketCap
+                raw_cap = _safe_float(data.get('marketCap') or data.get('listedValue', 0))
+                market_cap = raw_cap / 1e9 if raw_cap > 0 else 0
+    except Exception:
+        pass
+
+    # 2. DỰ PHÒNG VNS/TCBS NẾU SSI THIẾU NGÀNH HOẶC VỐN HÓA
+    if sector in ['Khác', 'Chưa xác định', '', None] or market_cap == 0:
+        try:
+            from vnstock import Vnstock
+            stock = Vnstock().stock(symbol=ticker_upper, source='TCBS')
+            
+            # Lấy ngành
+            if sector in ['Khác', 'Chưa xác định', '', None]:
+                profile = stock.company.profile()
+                if profile is not None and not profile.empty:
+                    row = profile.iloc[0]
+                    sector = row.get('icb_name') or row.get('industryName') or row.get('industry') or 'Khác'
+                    comp_name = row.get('organ_short_name') or comp_name
+
+            # 🛑 3. TỰ TÍNH VỐN HÓA NẾU MẤT DỮ LIỆU: (Số lượng CP lưu hành * Giá hiện tại)
+            if market_cap == 0 and current_price > 0:
+                overview = stock.company.overview()
+                if overview is not None and not overview.empty:
+                    issue_shares = _safe_float(overview.iloc[0].get('issue_share', 0))
+                    if issue_shares > 0:
+                        # Vốn hóa (Tỷ VNĐ) = (Giá VNĐ * Số lượng CP) / 1 Tỷ
+                        market_cap = (current_price * issue_shares) / 1_000_000_000
+        except Exception:
+            pass
+
+    # 4. CHUẨN HÓA CHUỖI HIỂN THỊ TRÁNH N/A
+    if market_cap > 0:
+        market_cap_str = f"{market_cap:,.0f} Tỷ"
+    else:
+        market_cap_str = "Đang cập nhật"
+
+    return {
+        'name': comp_name,
+        'exchange': 'HOSE',
+        'sector': str(sector).strip(),
+        'sub_sector': str(sector).strip(),
+        'market_cap': market_cap,
+        'market_cap_str': market_cap_str  # <--- Dùng biến này gửi Telegram
+    }
 
 def get_fa_data(ticker: str) -> dict:
     ticker_upper = ticker.upper()
@@ -394,8 +434,8 @@ def calc_smartscore(df: pd.DataFrame, fa_data: dict) -> tuple:
 
 import sqlite3
 
-def analyze_stock_signal(ticker: str) -> dict:
-    """Hàm phân tích tổng hợp: LẤY TRỰC TIẾP GIÁ ĐÓNG CỬA MỚI NHẤT TỪ MARKET_DATA.DB"""
+def analyze_stock_signal(ticker: str, total_capital: float = 100_000_000) -> dict:
+    """Hàm phân tích tổng hợp: Đã tối ưu % NAV và lọc kèo thối R:R < 1.0"""
     try:
         ticker = ticker.upper()
 
@@ -414,7 +454,6 @@ def analyze_stock_signal(ticker: str) -> dict:
                 row = cursor.fetchone()
                 if row:
                     raw_db_price, db_latest_date = row[0], row[1]
-                    # Ép chuẩn về đơn vị VNĐ (VD: 21.15 -> 21,150 VNĐ)
                     db_price = raw_db_price * 1000 if 0 < raw_db_price < 2000 else raw_db_price
         except Exception as db_err:
             print(f"[DB ERROR] Không đọc được giá từ market_data.db: {db_err}")
@@ -428,15 +467,20 @@ def analyze_stock_signal(ticker: str) -> dict:
         df_ta = ta_compute_indicators(df_ta)
         row_ta, prev_ta = df_ta.iloc[-1], df_ta.iloc[-2]
 
-        # NẾU LẤY ĐƯỢC GIÁ TỪ DB THÌ ƯU TIÊN DÙNG GIÁ DB, NẾU KHÔNG THÌ LẤY TỪ DF_TA
         if db_price is not None:
             price = db_price
         else:
             raw_p = float(row_ta["close"])
             price = raw_p * 1000 if 0 < raw_p < 2000 else raw_p
 
-        rsi_val = float(row_ta.get("rsi14", row_ta.get("rsi", 50)))
         vol_sma = row_ta.get("volume_sma20", row_ta.get("vol_ma20", 0))
+        
+        # 🛑 BỘ LỌC THANH KHOẢN: Loại bỏ mã rác có GTGD < 1 Tỷ/ngày
+        avg_daily_value = vol_sma * price
+        if avg_daily_value < 1_000_000_000:
+            return {"error": f"Mã <b>{ticker}</b> không đủ thanh khoản (>1 tỷ VNĐ/phiên)."}
+
+        rsi_val = float(row_ta.get("rsi14", row_ta.get("rsi", 50)))
         vol_ratio_val = float(row_ta["volume"] / vol_sma) if vol_sma else 0.0
         ema20_val = float(row_ta.get("ema20", price))
 
@@ -451,7 +495,7 @@ def analyze_stock_signal(ticker: str) -> dict:
             signal_type = 'BÁN' if price < ema20_val else 'THEO DÕI'
             trend_str = 'GIẢM / TÍCH LŨY'
 
-        # 3. LẤY DATAFRAME TÍNH SMARTSCORE
+        # 3. LẤY DATAFRAME TÍNH SMARTSCORE & R:R THỰC TẾ
         df = get_stock_dataframe(ticker)
         if df.empty:
             df = df_ta
@@ -466,7 +510,18 @@ def analyze_stock_signal(ticker: str) -> dict:
 
         latest = df.iloc[-1]
         atr = _safe_float(latest.get('atr14'), price * 0.02)
-        resist = _normalize_price(latest.get('resist_20')) if pd.notna(latest.get('resist_20')) else price * 1.15
+        resist = _normalize_price(latest.get('resist_20')) if pd.notna(latest.get('resist_20')) else price * 1.12
+
+        # CẮT LỖ VÀ MỤC TIÊU THEO CẢN THỰC TẾ
+        stop_loss = max(price - (1.5 * atr), price * 0.90)
+        risk = max(price - stop_loss, price * 0.01)
+        reward = max(resist - price, price * 0.03)
+        rr_ratio = reward / risk if risk > 0 else 0
+
+        # 🛑 LỌC KÈO THỐI: Nếu Risk/Reward < 1.0 -> Tự động chặn tín hiệu MUA
+        if rr_ratio < 1.0 and signal_type == 'MUA':
+            signal_type = 'THEO DÕI'
+            trend_str += ' (Bỏ qua: R:R < 1.0)'
 
         # LẤY ĐÚNG NGÀY CHỐT PHIÊN TỪ CSDL MARKET_DATA.DB
         if db_latest_date:
@@ -477,50 +532,64 @@ def analyze_stock_signal(ticker: str) -> dict:
         latest_date_str = last_row_date.strftime('%d/%m/%Y')
         latest_db_date_format = last_row_date.strftime('%Y-%m-%d')
 
-        company = get_company_info(ticker)
+        company = get_company_info(ticker, current_price=price)
         fa_data = get_fa_data(ticker)
         dinh_gia, chat_luong, dong_luong, score_tong = calc_smartscore(df, fa_data)
 
-        stop_loss = max(price - (2 * atr), price * 0.90)
-        risk = max(price - stop_loss, price * 0.01)
-        reward = resist - price
+        # -----------------------------------------------------------------
+        # 4. TÍNH VỊ THẾ KHUYẾN NGHỊ (CHUẨN HÓA % NAV - KHÔNG DÙNG CP LẺ)
+        # -----------------------------------------------------------------
+        sl_pct_val = abs((stop_loss / price - 1) * 100)
+        
+        if sl_pct_val > 0:
+            raw_nav_pct = (2.0 / sl_pct_val) * 100
+        else:
+            raw_nav_pct = 0.0
 
-        if reward < 2 * risk:
-            reward = 2 * risk
-            resist = price + reward
-
-        rr_ratio = reward / risk if risk > 0 else 0
+        final_nav_pct = round(min(raw_nav_pct, 20.0), 1)
 
         if signal_type == 'MUA':
-            open_trade(ticker, price, stop_loss, resist, rr_ratio, latest_db_date_format)
+            position_recommendation = f"🟢 Tỷ trọng khuyến nghị: <b>{final_nav_pct}% NAV</b>"
+        elif signal_type == 'THEO DÕI':
+            if rr_ratio < 1.0:
+                position_recommendation = f"⚪ Tỷ trọng dự kiến: <b>{final_nav_pct}% NAV</b> (Bỏ qua: R:R < 1.0)"
+            else:
+                position_recommendation = f"⚪ Tỷ trọng dự kiến: <b>{final_nav_pct}% NAV</b>"
+        else:
+            position_recommendation = "🔴 Bán chốt lời / Hạ tỷ trọng"
 
         # -----------------------------------------------------------------
-        # TÍNH VỊ THẾ DỰA TRÊN GIÁ MỚI NHẤT VỪA LẤY TỪ MARKET_DATA.DB
+        # 5. XỬ LÝ TRẠNG THÁI VỊ THẾ HIỆN TẠI
         # -----------------------------------------------------------------
         active_trade = get_active_trade(ticker)
+
+        if signal_type == 'MUA' and not active_trade:
+            open_trade(ticker, price, stop_loss, resist, rr_ratio, latest_db_date_format)
+            active_trade = get_active_trade(ticker)
+
         t_plus, pnl_pct = (0, 0.0)
         entry_date_display = latest_date_str
 
         if active_trade:
-            # Ép giá vốn về đơn vị VNĐ
-            raw_entry = float(active_trade.get('entry_price', 0))
+            raw_entry = float(active_trade.get('entry_price', price))
             entry_price = raw_entry * 1000 if 0 < raw_entry < 2000 else raw_entry
 
-            # TÍNH LÃI/LỖ THEO ĐÚNG GIÁ DB MỚI NHẤT
             if entry_price > 0:
                 pnl_pct = ((price - entry_price) / entry_price) * 100
             else:
                 pnl_pct = 0.0
 
             active_trade['entry_price'] = entry_price
-            active_trade['current_price'] = price  # <--- GÁN ĐÚNG GIÁ ĐÓNG CỬA MỚI TỪ DB
+            active_trade['current_price'] = price
             active_trade['pnl_pct'] = pnl_pct
 
             entry_date_str = active_trade.get('entry_date', latest_db_date_format)
             entry_date_display = pd.to_datetime(entry_date_str).strftime('%d/%m/%Y')
+            
             try:
-                t_plus = (pd.to_datetime(latest_db_date_format) - pd.to_datetime(entry_date_str)).days
-                t_plus = max(0, t_plus)
+                d_entry = pd.to_datetime(entry_date_str).date()
+                d_current = pd.to_datetime(latest_db_date_format).date()
+                t_plus = max(0, (d_current - d_entry).days)
             except Exception:
                 t_plus = 0
 
@@ -531,10 +600,11 @@ def analyze_stock_signal(ticker: str) -> dict:
             "company": company,
             "signal_type": signal_type,
             "trend_str": trend_str,
-            "price": price,                       # GIÁ ĐÓNG CỬA MỚI NHẤT TỪ DB
+            "price": price,
             "latest_date": latest_date_str,
+            "position_recommendation": position_recommendation,
             "entry_date": entry_date_display,
-            "pnl_pct": pnl_pct,
+            "pnl_pct": round(pnl_pct, 2),
             "t_plus": t_plus,
             "active_trade": active_trade,
             "df": df,
@@ -550,8 +620,8 @@ def analyze_stock_signal(ticker: str) -> dict:
                 "ema_status": ema_status_str
             },
             "fa": fa_data,
-            "stop_loss": stop_loss,
-            "take_profit": resist,
+            "stop_loss": round(stop_loss, 0),
+            "take_profit": round(resist, 0),
             "rr_ratio": round(rr_ratio, 2)
         }
     except Exception as e:
@@ -596,6 +666,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❓ Cú pháp không hợp lệ. Gõ mã cổ phiếu (VD: FPT) hoặc gõ /help.")
 
 
+import html
+import os
+import re
+
+import html
+import os
+
 async def process_and_send_stock_signal(update: Update, ticker: str):
     """Tạo BÁO CÁO HOÀN CHỈNH: Ảnh Chart + SmartScore + TA chuẩn + Quản trị 2x ATR + Vị thế"""
     msg = await update.message.reply_text(f"🔍 Đang tra cứu {ticker}...")
@@ -612,54 +689,86 @@ async def process_and_send_stock_signal(update: Update, ticker: str):
     else:
         signal_emoji = "⚪ THEO DÕI"
 
-    pnl_emoji = "🟢" if res["pnl_pct"] >= 0 else "🔴"
-    comp = res["company"]
+    comp = res.get("company", {})
     score = res["smartscore"]
     ta_info = res["ta"]
-    fa_info = res["fa"]
+    fa_info = res.get("fa", {})
 
-    company_name = html.escape(comp['name'])
-    sector_name = html.escape(str(comp['sector']))
+    company_name = html.escape(str(comp.get('name', ticker)))
+    
+    # 1. Xử lý Ngành
+    sector_raw = comp.get('sector') or fa_info.get('sector') or fa_info.get('industry') or 'Khác'
+    if str(sector_raw).strip() in ['Chưa xác định', 'nan', 'None', '']:
+        sector_raw = 'Khác'
+    sector_name = html.escape(str(sector_raw))
 
-    # GIÁ ĐÓNG CỬA HIỂN THỊ THEO ĐƠN VỊ NGHÌN ĐỒNG + QUY ĐỔI RA ĐỒNG
+    # 2. Xử lý Vốn hóa
+    cap_val = comp.get('market_cap', 0) or fa_info.get('market_cap', 0)
+    if isinstance(cap_val, (int, float)) and cap_val > 0:
+        cap_str = f"{cap_val:,.0f} tỷ"
+    else:
+        cap_str = html.escape(str(comp.get('market_cap_str', 'Đang cập nhật')))
+
+    # 3. Giá đóng cửa
     price_nghin = res['price'] / 1000
 
+    # 🟢 4. HÀM XL DẤU < > KHÔNG DÙNG REGEX (Đảm bảo 0% lỗi Python + Giữ nguyên thẻ <b>)
+    def sanitize_tg_html(text):
+        if not text:
+            return ""
+        text = str(text)
+        # Tạm thời giấu các thẻ HTML hợp lệ
+        text = text.replace("<b>", "__B_OPEN__").replace("</b>", "__B_CLOSE__")
+        text = text.replace("<code>", "__CODE_OPEN__").replace("</code>", "__CODE_CLOSE__")
+        # Escape các dấu < > còn lại (dấu so sánh toán học như < 1.0 hay > EMA20)
+        text = html.escape(text)
+        # Khôi phục lại thẻ HTML
+        text = text.replace("__B_OPEN__", "<b>").replace("__B_CLOSE__", "</b>")
+        text = text.replace("__CODE_OPEN__", "<code>").replace("__CODE_CLOSE__", "</code>")
+        return text
+
+    trend_clean = sanitize_tg_html(res.get('trend_str', ''))
+    pos_rec_clean = sanitize_tg_html(res.get('position_recommendation', 'Theo dõi tích lũy'))
+    ema_status_clean = sanitize_tg_html(ta_info.get('ema_status', ''))
+
+    # DỮ LIỆU ĐỊNH DẠNG CHUẨN GIAO DIỆN
     caption_text = (
-        f"📊 <b>{res['ticker']} - {company_name} ({comp['exchange']})</b>\n"
+        f"📊 <b>{res['ticker']} - {company_name} ({comp.get('exchange', 'HOSE')})</b>\n"
         f"📅 Chốt phiên ngày: <code>{res['latest_date']}</code>\n"
         f"-----------------------------------\n"
         f"💰 Giá đóng cửa: <b>{price_nghin:,.2f}</b> (Tương đương <b>{res['price']:,.0f} đ</b>)\n"
         f"Khuyến nghị: <b>{signal_emoji}</b>\n"
-        f"• Xu hướng: <code>{res['trend_str']}</code>\n"
-        f"• Vị thế khuyến nghị: Lãi/Lỗ <b>{res['pnl_pct']:+.1f}%</b> {pnl_emoji} | <code>T + {res['t_plus']}</code> (Ngày vào: {res['entry_date']})\n\n"
-        f"🟣 <b>ĐIỂM SMARTSCORE: {score['tong']}/100</b>\n"
-        f"• Định giá: <code>{score['dinh_gia']}</code> | Chất lượng: <code>{score['chat_luong']}</code> | Động lượng: <code>{score['dong_luong']}</code>\n"
-        f"• Ngành: <code>{sector_name}</code> | Vốn hóa: <code>{comp['market_cap']:,.0f} tỷ</code>\n"
+        f"• Xu hướng: {trend_clean}\n"
+        f"• Vị thế khuyến nghị: {pos_rec_clean}\n\n"
+        f"🟣 <b>ĐIỂM SMARTSCORE: {score.get('tong', 'N/A')}/100</b>\n"
+        f"• Định giá: {score.get('dinh_gia', 'N/A')} | Chất lượng: {score.get('chat_luong', 'N/A')} | Động lượng: {score.get('dong_luong', 'N/A')}\n"
+        f"• Ngành: <code>{sector_name}</code> | Vốn hóa: <code>{cap_str}</code>\n"
     )
 
-    # THÊM KỲ VÀO PHẦN BÁO CÁO TÀI CHÍNH
+    # 5. Chỉ số tài chính
     roe = fa_info.get('roe', fa_info.get('ROE', 'N/A'))
     pe = fa_info.get('pe', fa_info.get('PE', 'N/A'))
     eps = fa_info.get('eps_growth_yoy', fa_info.get('EPS_growth_yoy', 'N/A'))
     period = fa_info.get('period', fa_info.get('PERIOD', ''))
-    
     period_str = f" ({period})" if period and period != 'N/A' else ""
 
     caption_text += f"• Chỉ số tài chính{period_str}: ROE <code>{roe}%</code> | P/E <code>{pe}</code> | Tăng trưởng EPS <code>{eps}%</code>\n"
 
+    # 6. Phân tích kỹ thuật (TA) & Quản trị rủi ro
     sl_pct = (res['stop_loss'] / res['price'] - 1) * 100
     tp_pct = (res['take_profit'] / res['price'] - 1) * 100
 
     caption_text += (
         f"\n📈 <b>Phân tích kỹ thuật (TA):</b>\n"
         f"• RSI(14): <code>{ta_info['rsi']}</code> | Khối lượng: <code>{ta_info['vol_ratio']}x MA20</code>\n"
-        f"• Trạng thái EMA: <code>{ta_info['ema_status']}</code>\n\n"
+        f"• Trạng thái EMA: {ema_status_clean}\n\n"
         f"🛡 <b>Quản trị vị thế (2x ATR):</b>\n"
         f"• Cắt lỗ động: <code>{res['stop_loss']:,.0f} VNĐ</code> ({sl_pct:.1f}%)\n"
         f"• Chốt lời kỳ vọng: <code>{res['take_profit']:,.0f} VNĐ</code> (+{tp_pct:.1f}%)\n"
         f"• Tỷ lệ Risk/Reward: <code>1 : {res['rr_ratio']}</code>\n"
     )
-    # 📌 HIỂN THỊ VỊ THẾ DỰA VÀO GIÁ MỚI NHẤT MẠNH MẼ VÀ CHUẨN XÁC
+    
+    # 7. Vị thế tài khoản
     active_trade = res.get("active_trade")
     if active_trade:
         raw_entry = float(active_trade.get('entry_price', 0))
@@ -667,11 +776,7 @@ async def process_and_send_stock_signal(update: Update, ticker: str):
         volume = active_trade.get('volume', 100)
         curr_price = res['price']
 
-        if entry_price > 0:
-            pnl_curr = ((curr_price - entry_price) / entry_price) * 100
-        else:
-            pnl_curr = 0.0
-
+        pnl_curr = ((curr_price - entry_price) / entry_price) * 100 if entry_price > 0 else 0.0
         pnl_icon = "🟢" if pnl_curr >= 0 else "🔴"
         pnl_sign = "+" if pnl_curr >= 0 else ""
 
@@ -685,6 +790,7 @@ async def process_and_send_stock_signal(update: Update, ticker: str):
     else:
         caption_text += f"\n📌 <b>VỊ THẾ TÀI KHOẢN:</b> Chưa sở hữu"
 
+    # 8. Gửi ảnh + Caption
     chart_file = None
     try:
         chart_file = generate_candlestick_chart(res["df"], ticker)
@@ -696,19 +802,20 @@ async def process_and_send_stock_signal(update: Update, ticker: str):
         try:
             await msg.edit_text(caption_text, parse_mode="HTML")
         except Exception:
-            await update.message.reply_text(
-                f"📊 Kết quả phân tích {ticker}:\n"
-                f"• Giá: {res['price']:,.0f} VNĐ\n"
-                f"• Tín hiệu: {res['signal_type']}\n"
-                f"• SmartScore: {score['tong']}/100"
-            )
+            # Nếu HTML vẫn lỗi thì loại bỏ thẻ gửi text thuần để chống crash
+            import re
+            plain_text = re.sub(r'<[^>]+>', '', caption_text)
+            await update.message.reply_text(plain_text)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
     finally:
         if chart_file and os.path.exists(chart_file):
             try:
                 os.remove(chart_file)
             except Exception:
                 pass
-
 async def handle_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Bắt và xử lý sự kiện khi người dùng bấm các nút Inline Keyboard."""
     query = update.callback_query
@@ -781,8 +888,10 @@ async def handle_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE
 # PHẦN 2: LỆNH TODAYS, PORTFOLIO, WATCHLIST & UTILS
 # ====================================================
 
+import re
+
 async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Lấy báo cáo lọc TA chính chủ từ file ta_strategy.py."""
+    """Báo cáo lọc TODAY: Tự động giải thích lý do vì sao chưa cho điểm MUA."""
     await update.message.reply_text("⏳ Đang kích hoạt BỘ LỌC TA...")
 
     if not os.path.exists(DEFAULT_WATCH_LIST_PATH):
@@ -793,11 +902,62 @@ async def today_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with open(DEFAULT_WATCH_LIST_PATH, "r", encoding="utf-8") as f:
             watch_list = json.load(f)
 
-        # Chạy trực tiếp hàm báo cáo lọc từ ta_strategy.py
-        from strategies.ta_strategy import ta_criteria_report
-        report_text = ta_criteria_report(watch_list, realtime=True)
-        
-        # Escape HTML để tránh lỗi văng tag
+        rows_text = ""
+        buy_count = 0
+        total = len(watch_list)
+
+        for item in watch_list:
+            ticker = item["ticker"] if isinstance(item, dict) else item
+            
+            res = analyze_stock_signal(ticker)
+            
+            if "error" in res:
+                clean_err = re.sub(r'<[^>]+>', '', str(res['error']))
+                rows_text += f"• {ticker}: ⚠️ {clean_err}\n"
+                continue
+
+            signal_type = res.get("signal_type", "THEO DÕI")
+            ta_info = res.get("ta", {})
+            score_info = res.get("smartscore", {})
+            score_total = score_info.get("tong", 0)
+            rr_ratio = res.get("rr_ratio", 0)
+            
+            rsi_val = ta_info.get("rsi", "N/A")
+            vol_ratio = ta_info.get("vol_ratio", "N/A")
+
+            # CHỈ KHI HÀM ANALYZE CHO TÍN HIỆU "MUA"
+            if signal_type == "MUA":
+                buy_count += 1
+                rows_text += f"🟢 {ticker}: ĐẠT MUA (RSI:{rsi_val} | Vol:{vol_ratio}x)\n"
+            else:
+                # KIỂM TRA LÝ DO VÌ SAO CHƯA CHO MUA DÙ TA ĐẸP
+                reason = ""
+                if score_total < 60:
+                    reason = f"SmartScore thấp ({score_total}/100)"
+                elif float(rr_ratio) < 1.5 if str(rr_ratio).replace('.','').isdigit() else False:
+                    reason = f"Tỷ lệ R:R kém (1:{rr_ratio})"
+                else:
+                    reason = "Đang tích lũy/Chờ bứt phá"
+
+                t_ok = "📈" if ta_info.get("trend_ok", True) else "📉"
+                
+                try:
+                    v_ok = "🔊" if float(vol_ratio) >= 1.2 else "❌"
+                except (ValueError, TypeError):
+                    v_ok = "❌"
+
+                try:
+                    m_ok = "⚡" if 45 <= float(rsi_val) <= 68 else "❌"
+                except (ValueError, TypeError):
+                    m_ok = "❌"
+
+                # In thêm lý do vướng bộ lọc ở cuối dòng
+                rows_text += f"• {ticker}: [Trend:{t_ok} Vol:{v_ok} RSI:{m_ok}] -> 💡 {reason}\n"
+
+        report_text = f"Tổng số mã xét: {total}\n"
+        report_text += f"🎯 Đạt CẢ 3 (MUA): {buy_count}/{total}\n\n"
+        report_text += f"Chi tiết từng mã:\n{rows_text}"
+
         safe_report = html.escape(report_text)
 
         msg = (
@@ -922,8 +1082,10 @@ async def portfolio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Lỗi khi đọc portfolio: {e}", exc_info=True)
         await update.message.reply_text(f"⚠️ Có lỗi xảy ra: <code>{str(e)}</code>", parse_mode="HTML")
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 async def watchlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Xem danh sách Watchlist FA kèm Tên Ngành tự động."""
+    """Xem danh sách Watchlist FA kèm Tên Ngành tự động và nút Thêm/Xóa mã."""
     if not os.path.exists(WATCH_LIST_PATH):
         await update.message.reply_text("⚠️ Chưa có file <code>data/watch_list.json</code>.", parse_mode="HTML")
         return
@@ -931,8 +1093,21 @@ async def watchlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         with open(WATCH_LIST_PATH, "r", encoding="utf-8") as f:
             watch_data = json.load(f)
 
+        # 🟢 NÚT BẤM KÉP ĐÃ ĐỔI CALLBACK DATA ĐỂ TRÁNH TRÙNG LỆNH
+        keyboard = [
+            [
+                InlineKeyboardButton("➕ Thêm mã", callback_data="wl_add"),
+                InlineKeyboardButton("🗑 Xóa mã", callback_data="wl_del")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
         if not watch_data:
-            await update.message.reply_text("📭 Danh sách Watchlist hiện đang trống.")
+            await update.message.reply_text(
+                "📭 Danh sách Watchlist hiện đang trống.\n\n💡 <i>Bấm nút bên dưới để thêm mã mới.</i>", 
+                parse_mode="HTML",
+                reply_markup=reply_markup
+            )
             return
 
         reply = "📋 <b>DANH SÁCH CỔ PHIẾU ĐẠT CHUẨN CƠ BẢN (FA)</b>\n" + "="*30 + "\n"
@@ -965,11 +1140,115 @@ async def watchlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if len(watch_data) > 15:
                 reply += f"\n<i>...và {len(watch_data) - 15} mã khác.</i>"
 
-        await update.message.reply_text(reply, parse_mode="HTML")
+            reply += "\n\n💡 <i>Bấm nút bên dưới để thêm hoặc xóa mã nhanh.</i>"
+
+        await update.message.reply_text(reply, parse_mode="HTML", reply_markup=reply_markup)
     except Exception as e:
         logger.error(f"Lỗi đọc Watchlist: {e}", exc_info=True)
         await update.message.reply_text(f"❌ Lỗi đọc Watchlist: {e}", parse_mode="HTML")
 
+
+# 🟢 1. Hàm xử lý sự kiện khi bấm nút ➕ Thêm mã hoặc 🗑 Xóa mã trên Watchlist
+async def watchlist_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Xử lý khi người dùng ấn nút ➕ Thêm mã hoặc 🗑 Xóa mã."""
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "wl_add":
+        msg = (
+            "➕ <b>CÚ PHÁP THÊM MÃ VÀO WATCHLIST:</b>\n\n"
+            "Hãy gõ lệnh: <code>/wladd &lt;Mã_Cổ_Phiếu&gt;</code>\n"
+            "<i>Ví dụ:</i> <code>/wladd FPT</code> hoặc <code>/wladd SSI, VND, MWG</code>"
+        )
+        await query.message.reply_text(msg, parse_mode="HTML")
+
+    elif query.data == "wl_del":
+        msg = (
+            "🗑 <b>CÚ PHÁP XÓA MÃ KHỎI WATCHLIST:</b>\n\n"
+            "Hãy gõ lệnh: <code>/wldel &lt;Mã_Cổ_Phiếu&gt;</code>\n"
+            "<i>Ví dụ:</i> <code>/wldel CAP</code> hoặc <code>/wldel MHC, SGH</code>"
+        )
+        await query.message.reply_text(msg, parse_mode="HTML")
+
+
+# 🟢 2. Hàm xử lý lệnh /wladd (Thêm mã)
+async def add_watchlist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("⚠️ Cú pháp: <code>/wladd &lt;Mã&gt;</code> (Ví dụ: <code>/wladd FPT</code>)", parse_mode="HTML")
+        return
+
+    input_text = " ".join(context.args)
+    raw_tickers = [t.strip().upper() for t in input_text.replace(',', ' ').split() if t.strip()]
+
+    os.makedirs(os.path.dirname(WATCH_LIST_PATH), exist_ok=True)
+    watch_data = []
+    if os.path.exists(WATCH_LIST_PATH):
+        try:
+            with open(WATCH_LIST_PATH, "r", encoding="utf-8") as f:
+                watch_data = json.load(f)
+        except Exception:
+            watch_data = []
+
+    existing = set()
+    for item in watch_data:
+        t = item["ticker"].upper() if isinstance(item, dict) and "ticker" in item else str(item).upper()
+        existing.add(t)
+
+    added, exist_list = [], []
+    for ticker in raw_tickers:
+        if ticker in existing:
+            exist_list.append(ticker)
+        else:
+            watch_data.append({"ticker": ticker})
+            existing.add(ticker)
+            added.append(ticker)
+
+    with open(WATCH_LIST_PATH, "w", encoding="utf-8") as f:
+        json.dump(watch_data, f, ensure_ascii=False, indent=2)
+
+    msg = "✅ <b>CẬP NHẬT WATCHLIST SUCCESSFUL</b>\n\n"
+    if added:
+        msg += f"➕ Đã thêm: <code>{', '.join(added)}</code>\n"
+    if exist_list:
+        msg += f"ℹ️ Đã có sẵn: <code>{', '.join(exist_list)}</code>\n"
+    msg += f"\n📋 Tổng số mã hiện tại: <b>{len(watch_data)}</b>"
+    
+    await update.message.reply_text(msg, parse_mode="HTML")
+
+
+# 🟢 3. Hàm xử lý lệnh /wldel (Xóa mã)
+async def del_watchlist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("⚠️ Cú pháp: <code>/wldel &lt;Mã&gt;</code> (Ví dụ: <code>/wldel CAP</code>)", parse_mode="HTML")
+        return
+
+    input_text = " ".join(context.args)
+    targets = [t.strip().upper() for t in input_text.replace(',', ' ').split() if t.strip()]
+
+    if not os.path.exists(WATCH_LIST_PATH):
+        await update.message.reply_text("⚠️ Watchlist trống!", parse_mode="HTML")
+        return
+
+    with open(WATCH_LIST_PATH, "r", encoding="utf-8") as f:
+        watch_data = json.load(f)
+
+    new_data, removed = [], []
+    for item in watch_data:
+        t = item["ticker"].upper() if isinstance(item, dict) and "ticker" in item else str(item).upper()
+        if t in targets:
+            removed.append(t)
+        else:
+            new_data.append(item)
+
+    with open(WATCH_LIST_PATH, "w", encoding="utf-8") as f:
+        json.dump(new_data, f, ensure_ascii=False, indent=2)
+
+    msg = "🗑 <b>CẬP NHẬT XÓA WATCHLIST</b>\n\n"
+    if removed:
+        msg += f"➖ Đã xóa: <code>{', '.join(removed)}</code>\n"
+    msg += f"\n📋 Tổng số mã còn lại: <b>{len(new_data)}</b>"
+    
+    await update.message.reply_text(msg, parse_mode="HTML")
 
 async def sector_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Xử lý lệnh /sector — Phân tích sóng ngành chi tiết từng mã (Đa luồng)."""
@@ -1089,15 +1368,15 @@ async def sector_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def handle_text_ticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Xử lý tin nhắn khi người dùng gõ trực tiếp mã cổ phiếu (VD: hpg, vcb, fpt)"""
+    """Xử lý tin nhắn khi người dùng gõ trực tiếp mã cổ phiếu (VD: hpg, d2d, fpt)"""
     text = update.message.text.strip().upper()
-    if 3 <= len(text) <= 5 and text.isalpha():
+    
+    # ĐỔI .isalpha() THÀNH .isalnum() ĐỂ NHẬN CẢ CHỮ VÀ SỐ (NHƯ D2D, C32)
+    if 3 <= len(text) <= 5 and text.isalnum():
         # Gọi trực tiếp quy trình tạo báo cáo đầy đủ (SmartScore + Chart + TA + FA)
         await process_and_send_stock_signal(update, text)
     else:
         await update.message.reply_text("❓ Lệnh không hợp lệ. Hãy gõ mã cổ phiếu (VD: FPT) hoặc gõ /help.")
-
-import re
 
 # ----------------------------------------------------
 # 1. QUẢN LÝ DỮ LIỆU CẢNH BÁO GIÁ THỦ CÔNG

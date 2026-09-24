@@ -331,12 +331,16 @@ def evaluate_signal(df: pd.DataFrame) -> dict:
     if rsi_sell or price_below_ema:
         signal = "SELL"
     elif buy_score == 3:
-        signal = "BUY"
+        # Bổ sung bộ lọc R:R < 1.0 tại đây
+        if not np.isnan(rr) and rr < 1.0:
+            signal = "WATCH"  # Hạ xuống WATCH nếu kèo thối R:R < 1.0
+        else:
+            signal = "BUY"
     elif buy_score >= 2:
         signal = "WATCH"
     else:
         signal = "NO SIGNAL"
-
+        
     stop_loss = max(0.0, price - ATR_STOP_MULTIPLIER * atr14)
     risk = price - stop_loss
     take_profit = price + risk * RISK_REWARD_TARGET

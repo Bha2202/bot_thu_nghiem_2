@@ -153,20 +153,6 @@
     "updated_at": "2026-09-22"
   },
   {
-    "ticker": "HPG",
-    "sector": "Chưa phân ngành",
-    "roe": 12.7,
-    "pe": 12.0,
-    "debt_equity": 0.7,
-    "eps_growth_qoq": null,
-    "eps_growth_qoq_prev": null,
-    "eps_growth_yoy": 28.5,
-    "free_float_pct": 67.3,
-    "quarter_growth_basis": "yoy",
-    "revenue_growth_yoy": 12.4,
-    "eps_growth_delta": null,
-    "cfo": 17365859056591.0,
-    "priority_sector": "",
-    "updated_at": "2026-09-22"
+    "ticker": "HPG"
   }
 ]

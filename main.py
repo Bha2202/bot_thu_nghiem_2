@@ -26,10 +26,14 @@ from bot.handlers import (
     portfolio_command,
     today_command,
     watchlist_command,
+    watchlist_button_click,  # 🟢 THÊM: Import handler nút bấm Watchlist
+    add_watchlist_cmd,       # 🟢 THÊM: Import hàm xử lý /wladd
+    del_watchlist_cmd,       # 🟢 THÊM: Import hàm xử lý /wldel
     sector_command,
     alert_command,
     check_market_alerts_job,
     handle_button_click,
+    handle_portfolio_buttons,
     handle_text_ticker,
 )
 
@@ -376,6 +380,15 @@ def main():
         )
     )
 
+    # 🟢 THÊM: Đăng ký lệnh thêm/xóa mã trực tiếp cho Watchlist
+    app.add_handler(CommandHandler("wladd", add_watchlist_cmd))
+    app.add_handler(CommandHandler("wldel", del_watchlist_cmd))
+
+    # 🟢 THÊM: Bắt sự kiện bấm nút trên Watchlist (pattern wl_)
+    app.add_handler(CallbackQueryHandler(watchlist_button_click, pattern="^wl_"))
+
+    app.add_handler(CallbackQueryHandler(handle_portfolio_buttons, pattern="^btn_del_pos$"))
+    app.add_handler(CallbackQueryHandler(handle_button_click))
 
     app.add_handler(
         CommandHandler(

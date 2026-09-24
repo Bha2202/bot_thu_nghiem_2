@@ -293,27 +293,41 @@ def ta_criteria_report(watch_list: list[dict], db_path: str | Path = DEFAULT_DB_
                        realtime: bool = True) -> str:
     rows = []
     loader = ta_load_price_history_realtime if realtime else ta_load_price_history
+    positions = ta_load_positions()
+
     for record in watch_list:
         ticker = record["ticker"]
         hist = loader(ticker, db_path)
         if len(hist) < MIN_BARS_REQUIRED:
             rows.append({"ticker": ticker, "trend_ok": None, "volume_ok": None,
-                         "momentum_ok": None, "ghi_chú": "thiếu dữ liệu giá"})
+                         "momentum_ok": None, "signal": "NO DATA", "ghi_chú": "thiếu dữ liệu giá"})
             continue
+            
         hist = ta_compute_indicators(hist)
         row, prev = hist.iloc[-1], hist.iloc[-2]
         if pd.isna(row["rsi14"]) or pd.isna(prev["rsi14"]) or pd.isna(row["volume_sma20"]):
             rows.append({"ticker": ticker, "trend_ok": None, "volume_ok": None,
-                         "momentum_ok": None, "ghi_chú": "chỉ báo chưa đủ làm nóng"})
+                         "momentum_ok": None, "signal": "NO DATA", "ghi_chú": "chỉ báo chưa đủ làm nóng"})
             continue
 
         trend_ok = row["close"] > row["ema20"] > prev["ema20"]
         volume_ok = row["volume_sma20"] > 0 and row["volume"] >= VOLUME_SPIKE_RATIO * row["volume_sma20"]
         momentum_ok = RSI_BUY_MIN <= row["rsi14"] <= RSI_BUY_MAX
+
+        # ĐỒNG BỘ: Gọi hàm ta_evaluate_symbol để lấy tín hiệu chuẩn (có chứa SmartScore & R:R)
+        current_pos = positions.get(ticker)
+        event, _ = ta_evaluate_symbol(ticker, hist, current_pos)
+        
+        signal_type = event.get("signal_type") if event else ("HOLD" if current_pos else "NO SIGNAL")
+
         rows.append({
-            "ticker": ticker, "trend_ok": trend_ok, "volume_ok": volume_ok, "momentum_ok": momentum_ok,
+            "ticker": ticker, 
+            "trend_ok": trend_ok, 
+            "volume_ok": volume_ok, 
+            "momentum_ok": momentum_ok,
             "rsi": round(float(row["rsi14"]), 1),
             "volume_ratio": round(float(row["volume"] / row["volume_sma20"]), 2) if row["volume_sma20"] else None,
+            "signal": signal_type,
             "ghi_chú": "",
         })
 
@@ -328,12 +342,12 @@ def ta_criteria_report(watch_list: list[dict], db_path: str | Path = DEFAULT_DB_
                             ("momentum_ok", f"RSI trong [{RSI_BUY_MIN}, {RSI_BUY_MAX}]")]:
             text += f" • {label}: {int(checkable[cond].sum())}/{len(checkable)} mã\n"
         
-        buy_count = int((checkable['trend_ok'] & checkable['volume_ok'] & checkable['momentum_ok']).sum())
+        # CHỈ ĐẾM LÀ MUA KHI SIGNAL THỰC SỰ LÀ 'BUY'
+        buy_count = int((checkable['signal'] == 'BUY').sum())
         text += f"🎯 Đạt CẢ 3 (MUA): {buy_count}/{len(checkable)}\n"
     
     text += "\nChi tiết từng mã:\n"
     
-    # TRÌNH BÀY DẠNG LIST GỌN ĐỂ TRÁNH VỠ HÀNG TELEGRAM
     for _, r in df.iterrows():
         t = r["ticker"]
         if r["ghi_chú"]:
@@ -344,14 +358,13 @@ def ta_criteria_report(watch_list: list[dict], db_path: str | Path = DEFAULT_DB_
         v_ok = "🔊" if r["volume_ok"] else "❌"
         m_ok = "⚡" if r["momentum_ok"] else "❌"
         
-        if r["trend_ok"] and r["volume_ok"] and r["momentum_ok"]:
+        # CHỈ GẮN MÁC 🟢 ĐẠT MUA KHI SIGNAL THỰC SỰ LÀ 'BUY'
+        if r["signal"] == "BUY":
             text += f"🟢 {t}: ĐẠT MUA (RSI:{r['rsi']} | Vol:{r['volume_ratio']}x)\n"
         else:
             text += f"• {t}: [Trend:{t_ok} Vol:{v_ok} RSI:{m_ok}]\n"
             
     return text
-
-
 # ----------------------------------------------------------------------------
 # 7. Quét toàn bộ watch_list.json (đã qua Lớp 1 + Lớp 2)
 # ----------------------------------------------------------------------------
