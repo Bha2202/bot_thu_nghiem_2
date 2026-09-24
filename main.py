@@ -4,9 +4,7 @@ import logging
 import asyncio
 from datetime import time
 
-
 from dotenv import load_dotenv
-
 
 from telegram.request import HTTPXRequest
 from telegram.ext import (
@@ -17,8 +15,10 @@ from telegram.ext import (
     filters
 )
 
+# =============================================================
+# IMPORT HANDLER TELEGRAM
+# =============================================================
 
-# Import các handler xử lý từ bot/handlers.py
 from bot.handlers import (
     start_command,
     help_command,
@@ -26,9 +26,9 @@ from bot.handlers import (
     portfolio_command,
     today_command,
     watchlist_command,
-    watchlist_button_click,  # 🟢 THÊM: Import handler nút bấm Watchlist
-    add_watchlist_cmd,       # 🟢 THÊM: Import hàm xử lý /wladd
-    del_watchlist_cmd,       # 🟢 THÊM: Import hàm xử lý /wldel
+    watchlist_button_click,
+    add_watchlist_cmd,
+    del_watchlist_cmd,
     sector_command,
     alert_command,
     check_market_alerts_job,
@@ -37,90 +37,77 @@ from bot.handlers import (
     handle_text_ticker,
 )
 
+# =============================================================
+# IMPORT REALTIME PIPELINE
+# =============================================================
+
+from stock_bot.data_pipeline.main import (
+    start_realtime_pipeline,
+    stop_realtime_pipeline,
+)
 
 # =============================================================
 # CẤU HÌNH LOGGING
 # =============================================================
-
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-
 logger = logging.getLogger(__name__)
-
 
 # =============================================================
 # TẢI BIẾN MÔI TRƯỜNG
 # =============================================================
 
-
 load_dotenv()
 
-
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
-
 
 
 # =============================================================
 # TỰ ĐỘNG CẬP NHẬT DỮ LIỆU LỊCH SỬ
 # =============================================================
 
-
 async def update_history_job(context):
     """
     Tự động cập nhật dữ liệu lịch sử.
 
-
-    Chạy file:
+    Chạy:
         python -m stock_bot.data_pipeline.update_history
 
-
-    Output được đọc bằng UTF-8 và hiển thị realtime
+    Output được đọc bằng UTF-8 và hiển thị
     trong log của Telegram Bot.
     """
-
 
     logger.info(
         "🔄 Bắt đầu cập nhật dữ liệu lịch sử..."
     )
 
-
     try:
-
 
         # -----------------------------------------------------
         # Chạy update_history.py dưới dạng subprocess
         # -----------------------------------------------------
 
-
         process = await asyncio.create_subprocess_exec(
-
 
             # Python hiện tại đang chạy bot
             sys.executable,
 
-
             # -u = unbuffered
-            # giúp log xuất ra ngay
             "-u",
-
 
             # Chạy module update_history
             "-m",
             "stock_bot.data_pipeline.update_history",
 
-
             # Đọc stdout
             stdout=asyncio.subprocess.PIPE,
 
-
             # Gộp stderr vào stdout
             stderr=asyncio.subprocess.STDOUT,
-
 
             # Ép Python subprocess dùng UTF-8
             env={
@@ -129,93 +116,94 @@ async def update_history_job(context):
             }
         )
 
-
         # -----------------------------------------------------
         # Đọc log realtime từng dòng
         # -----------------------------------------------------
 
-
         while True:
 
-
             line = await process.stdout.readline()
-
 
             if not line:
                 break
 
-
-            # Ép UTF-8
             text = line.decode(
                 "utf-8",
                 errors="replace"
             ).rstrip()
 
-
             if text:
                 logger.info(text)
-
 
         # -----------------------------------------------------
         # Chờ subprocess kết thúc
         # -----------------------------------------------------
 
-
         return_code = await process.wait()
-
 
         # -----------------------------------------------------
         # Kiểm tra kết quả
         # -----------------------------------------------------
 
-
         if return_code == 0:
-
 
             logger.info(
                 "✅ Cập nhật dữ liệu lịch sử thành công!"
             )
 
-
         else:
-
 
             logger.error(
                 "❌ Cập nhật dữ liệu lịch sử thất bại! "
                 f"Mã lỗi: {return_code}"
             )
 
-
     except Exception as e:
-
 
         logger.exception(
             f"❌ Lỗi khi chạy update_history.py: {e}"
         )
 
 
-
-
 # =============================================================
-# KHỞI TẠO BOT
+# KHỞI ĐỘNG REALTIME PIPELINE
 # =============================================================
-
 
 async def post_init_setup(application: Application):
     """
-    Hàm khởi tạo tự động chạy sau khi Bot sẵn sàng:
+    Hàm khởi tạo tự động chạy sau khi Telegram Bot sẵn sàng.
 
-
-    1. Thiết lập Menu Telegram.
-    2. Quét giá và cảnh báo mỗi 2 phút.
-    3. Chạy cập nhật dữ liệu lịch sử để test.
+    1. Khởi động Vietcap Realtime Pipeline.
+    2. Thiết lập Menu Telegram.
+    3. Quét cảnh báo giá mỗi 2 phút.
+    4. Chạy cập nhật dữ liệu lịch sử sau 10 giây.
     """
 
+    # =========================================================
+    # 0. KHỞI ĐỘNG VIETCAP REALTIME
+    # =========================================================
+
+    try:
+
+        logger.info(
+            "⚡ Đang khởi động Vietcap Realtime Pipeline..."
+        )
+
+        start_realtime_pipeline()
+
+        logger.info(
+            "✅ Vietcap Realtime Pipeline đã khởi động!"
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            f"❌ Không khởi động được Realtime Pipeline: {e}"
+        )
 
     # =========================================================
     # 1. MENU TELEGRAM
     # =========================================================
-
 
     commands = [
         (
@@ -248,29 +236,23 @@ async def post_init_setup(application: Application):
         )
     ]
 
-
     await application.bot.set_my_commands(
         commands
     )
-
 
     logger.info(
         "✅ Đã thiết lập Menu gợi ý lệnh thành công trên Telegram!"
     )
 
-
     # =========================================================
     # 2. JOBQUEUE
     # =========================================================
 
-
     if application.job_queue:
-
 
         # -----------------------------------------------------
         # Quét cảnh báo giá mỗi 2 phút
         # -----------------------------------------------------
-
 
         application.job_queue.run_repeating(
             check_market_alerts_job,
@@ -278,93 +260,100 @@ async def post_init_setup(application: Application):
             first=10
         )
 
-
         logger.info(
             "⏰ Đã kích hoạt JobQueue quét cảnh báo giá "
             "Realtime (2 phút/lần)!"
         )
 
-
         # -----------------------------------------------------
         # 3. CẬP NHẬT LỊCH SỬ - ĐANG TEST
         # -----------------------------------------------------
-        #
-        # Chạy sau 60 giây kể từ lúc bot khởi động.
-        #
-        # SAU KHI TEST THÀNH CÔNG:
-        # sẽ đổi phần này sang run_daily lúc 16:00 VN.
-        # -----------------------------------------------------
-
 
         application.job_queue.run_once(
             update_history_job,
             when=10
         )
 
-
         logger.info(
             "📊 Đã đặt lịch TEST cập nhật dữ liệu lịch sử "
-            "sau 60 giây!"
+            "sau 10 giây!"
         )
 
 
+# =============================================================
+# SHUTDOWN REALTIME PIPELINE
+# =============================================================
+
+async def post_shutdown_setup(application: Application):
+    """
+    Đóng Vietcap Realtime Pipeline khi Telegram Bot shutdown.
+    """
+
+    try:
+
+        logger.info(
+            "🛑 Đang đóng Vietcap Realtime Pipeline..."
+        )
+
+        stop_realtime_pipeline()
+
+        logger.info(
+            "✅ Vietcap Realtime Pipeline đã được đóng."
+        )
+
+    except Exception as e:
+
+        logger.exception(
+            f"❌ Lỗi khi đóng Realtime Pipeline: {e}"
+        )
 
 
 # =============================================================
 # MAIN
 # =============================================================
 
-
 def main():
-
 
     # ---------------------------------------------------------
     # Kiểm tra TOKEN
     # ---------------------------------------------------------
 
-
     if not TOKEN:
-
 
         logger.error(
             "❌ LỖI: Chưa cài đặt TELEGRAM_BOT_TOKEN "
             "trong file .env!"
         )
 
-
         sys.exit(1)
-
 
     # ---------------------------------------------------------
     # Cấu hình HTTP
     # ---------------------------------------------------------
-
 
     request = HTTPXRequest(
         connect_timeout=30.0,
         read_timeout=30.0
     )
 
-
     # ---------------------------------------------------------
     # Tạo Application
     # ---------------------------------------------------------
-
 
     app = (
         Application.builder()
         .token(TOKEN)
         .request(request)
         .post_init(post_init_setup)
+        .post_shutdown(post_shutdown_setup)
         .build()
     )
-
 
     # =========================================================
     # COMMAND HANDLER
     # =========================================================
 
-
+    # /start
     app.add_handler(
         CommandHandler(
             "start",
@@ -372,7 +361,7 @@ def main():
         )
     )
 
-
+    # /help
     app.add_handler(
         CommandHandler(
             "help",
@@ -380,15 +369,51 @@ def main():
         )
     )
 
-    # 🟢 THÊM: Đăng ký lệnh thêm/xóa mã trực tiếp cho Watchlist
-    app.add_handler(CommandHandler("wladd", add_watchlist_cmd))
-    app.add_handler(CommandHandler("wldel", del_watchlist_cmd))
+    # =========================================================
+    # WATCHLIST COMMAND
+    # =========================================================
 
-    # 🟢 THÊM: Bắt sự kiện bấm nút trên Watchlist (pattern wl_)
-    app.add_handler(CallbackQueryHandler(watchlist_button_click, pattern="^wl_"))
+    # /wladd
+    app.add_handler(
+        CommandHandler(
+            "wladd",
+            add_watchlist_cmd
+        )
+    )
 
-    app.add_handler(CallbackQueryHandler(handle_portfolio_buttons, pattern="^btn_del_pos$"))
-    app.add_handler(CallbackQueryHandler(handle_button_click))
+    # /wldel
+    app.add_handler(
+        CommandHandler(
+            "wldel",
+            del_watchlist_cmd
+        )
+    )
+
+    # =========================================================
+    # CALLBACK WATCHLIST
+    # =========================================================
+
+    app.add_handler(
+        CallbackQueryHandler(
+            watchlist_button_click,
+            pattern="^wl_"
+        )
+    )
+
+    # =========================================================
+    # CALLBACK PORTFOLIO
+    # =========================================================
+
+    app.add_handler(
+        CallbackQueryHandler(
+            handle_portfolio_buttons,
+            pattern="^btn_del_pos$"
+        )
+    )
+
+    # =========================================================
+    # COMMAND STOCK
+    # =========================================================
 
     app.add_handler(
         CommandHandler(
@@ -397,6 +422,9 @@ def main():
         )
     )
 
+    # =========================================================
+    # COMMAND PORTFOLIO
+    # =========================================================
 
     app.add_handler(
         CommandHandler(
@@ -405,6 +433,9 @@ def main():
         )
     )
 
+    # =========================================================
+    # COMMAND TODAY
+    # =========================================================
 
     app.add_handler(
         CommandHandler(
@@ -413,6 +444,9 @@ def main():
         )
     )
 
+    # =========================================================
+    # COMMAND WATCHLIST
+    # =========================================================
 
     app.add_handler(
         CommandHandler(
@@ -421,6 +455,9 @@ def main():
         )
     )
 
+    # =========================================================
+    # COMMAND SECTOR
+    # =========================================================
 
     app.add_handler(
         CommandHandler(
@@ -429,6 +466,9 @@ def main():
         )
     )
 
+    # =========================================================
+    # COMMAND ALERT
+    # =========================================================
 
     app.add_handler(
         CommandHandler(
@@ -437,11 +477,9 @@ def main():
         )
     )
 
-
     # =========================================================
-    # CALLBACK QUERY
+    # CALLBACK QUERY CHUNG
     # =========================================================
-
 
     app.add_handler(
         CallbackQueryHandler(
@@ -449,11 +487,9 @@ def main():
         )
     )
 
-
     # =========================================================
     # MESSAGE HANDLER
     # =========================================================
-
 
     app.add_handler(
         MessageHandler(
@@ -462,30 +498,34 @@ def main():
         )
     )
 
-
     # =========================================================
     # CHẠY BOT
     # =========================================================
 
-
     logger.info(
-        "🚀 Telegram Bot đã khởi chạy thành công "
-        "và đang lắng nghe..."
+        "🚀 Telegram Bot đang khởi chạy..."
     )
 
+    logger.info(
+        "⚡ Realtime: Vietcap → DNSE Failover"
+    )
+
+    logger.info(
+        "📊 Historical: KBS → DNSE Fallback"
+    )
+
+    logger.info(
+        "📡 Bot đang lắng nghe Telegram..."
+    )
 
     app.run_polling(
         drop_pending_updates=True
     )
 
 
-
-
 # =============================================================
 # ENTRY POINT
 # =============================================================
 
-
 if __name__ == "__main__":
     main()
-

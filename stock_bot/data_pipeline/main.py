@@ -35,18 +35,26 @@ from stock_bot.data_pipeline.failover_manager import (
 
 
 # =========================================================
-# HELPER CHUẨN HÓA ĐƠN VỊ GIÁ (Tránh lỗi +97563.6% PnL)
+# HELPER CHUẨN HÓA ĐƠN VỊ GIÁ
 # =========================================================
 
 def _normalize_price(price: float) -> float:
     """
-    Đảm bảo giá khớp luôn theo đơn vị nghìn đồng (VD: 20,900 VNĐ -> 20.9).
-    Tránh trường hợp lệch đơn vị làm % Lãi/Lỗ tính ra con số khổng lồ.
+    Đảm bảo giá khớp luôn theo đơn vị nghìn đồng.
+
+    Ví dụ:
+        20,900 VNĐ -> 20.9
+        18,500 VNĐ -> 18.5
+
+    Tránh lỗi lệch đơn vị làm PnL sai.
     """
+
     if price is None or price <= 0:
         return 0.0
-    if price > 2000:  # Giá nhận về theo VNĐ (VD: 20900)
+
+    if price > 2000:
         return price / 1000.0
+
     return price
 
 
@@ -72,10 +80,12 @@ def handle_realtime_data(
     )
 
     if not parsed_data:
+
         print(
             "[REALTIME] Không có dữ liệu "
             "match_price hợp lệ."
         )
+
         return
 
     valid_count = 0
@@ -83,16 +93,28 @@ def handle_realtime_data(
 
     for item in parsed_data:
 
-        # Chuẩn hóa giá trước khi kiểm tra & lưu
-        item["price"] = _normalize_price(item.get("price", 0.0))
+        # -------------------------------------------------
+        # Chuẩn hóa giá
+        # -------------------------------------------------
 
+        item["price"] = _normalize_price(
+            item.get("price", 0.0)
+        )
+
+        # -------------------------------------------------
         # Kiểm tra dữ liệu
+        # -------------------------------------------------
+
         if not MarketValidator.validate(item):
 
             invalid_count += 1
+
             continue
 
-        # Lưu dữ liệu realtime vào RAM
+        # -------------------------------------------------
+        # Lưu realtime vào MarketStore
+        # -------------------------------------------------
+
         market_store.save(
             symbol=item["symbol"],
             price=item["price"],
@@ -103,16 +125,22 @@ def handle_realtime_data(
 
         valid_count += 1
 
+    # -----------------------------------------------------
+    # Vietcap hoạt động bình thường
+    # -----------------------------------------------------
+
     if valid_count > 0:
 
-        # Báo cho FailoverManager rằng
-        # Vietcap đang hoạt động bình thường.
         failover_manager.record_vietcap_success()
 
         print(
             f"[REALTIME] Đã lưu "
             f"{valid_count} bản ghi."
         )
+
+    # -----------------------------------------------------
+    # Dữ liệu không hợp lệ
+    # -----------------------------------------------------
 
     if invalid_count > 0:
 
@@ -205,8 +233,6 @@ def run_historical_update(
             "Lần cập nhật tiếp theo sau 24 giờ."
         )
 
-        # Chờ 24 giờ nhưng vẫn có thể
-        # dừng ngay khi bot shutdown.
         stop_event.wait(
             UPDATE_INTERVAL
         )
@@ -236,7 +262,7 @@ def run_dnse_failover(
     while not stop_event.is_set():
 
         # -------------------------------------------------
-        # CHỈ CHẠY DNSE KHI ĐANG FAILOVER
+        # Chỉ chạy DNSE khi đang failover
         # -------------------------------------------------
 
         if (
@@ -254,7 +280,7 @@ def run_dnse_failover(
         )
 
         # -------------------------------------------------
-        # LẤY DỮ LIỆU DNSE
+        # Lấy dữ liệu DNSE
         # -------------------------------------------------
 
         for symbol in symbols:
@@ -267,6 +293,7 @@ def run_dnse_failover(
                 failover_manager.get_current_source()
                 != "dnse"
             ):
+
                 break
 
             try:
@@ -280,16 +307,25 @@ def run_dnse_failover(
                 if not data:
                     continue
 
+                # -------------------------------------------------
                 # Chuẩn hóa giá DNSE
-                data["price"] = _normalize_price(data.get("price", 0.0))
+                # -------------------------------------------------
 
-                # Kiểm tra dữ liệu DNSE
-                if not MarketValidator.validate(
-                    data
-                ):
+                data["price"] = _normalize_price(
+                    data.get("price", 0.0)
+                )
+
+                # -------------------------------------------------
+                # Kiểm tra dữ liệu
+                # -------------------------------------------------
+
+                if not MarketValidator.validate(data):
                     continue
 
-                # Lưu vào cùng MarketStore
+                # -------------------------------------------------
+                # Lưu DNSE vào cùng MarketStore
+                # -------------------------------------------------
+
                 market_store.save(
                     symbol=data["symbol"],
                     price=data["price"],
@@ -310,6 +346,331 @@ def run_dnse_failover(
 
     print(
         "[FAILOVER THREAD] "
+        "Đã dừng."
+    )
+
+
+# =========================================================
+# =========================================================
+# REALTIME PIPELINE DÙNG CHUNG CHO TELEGRAM BOT
+# =========================================================
+# =========================================================
+
+_realtime_market_store = None
+_realtime_collector = None
+_realtime_failover_manager = None
+_realtime_stop_event = None
+_realtime_threads = []
+
+
+# =========================================================
+# KHỞI ĐỘNG REALTIME PIPELINE
+# =========================================================
+
+def start_realtime_pipeline():
+
+    global _realtime_market_store
+    global _realtime_collector
+    global _realtime_failover_manager
+    global _realtime_stop_event
+    global _realtime_threads
+
+    # -----------------------------------------------------
+    # Nếu đã chạy thì không khởi động lần 2
+    # -----------------------------------------------------
+
+    if _realtime_collector is not None:
+
+        print(
+            "[REALTIME] Pipeline đã được khởi động."
+        )
+
+        return _realtime_market_store
+
+    print(
+        "\n=========================================="
+    )
+
+    print(
+        "   KHỞI ĐỘNG REALTIME PIPELINE"
+    )
+
+    print(
+        "=========================================="
+    )
+
+    # =====================================================
+    # 1. MARKET STORE
+    # =====================================================
+
+    market_store = MarketStore()
+
+    _realtime_market_store = market_store
+
+    # =====================================================
+    # 2. FAILOVER MANAGER
+    # =====================================================
+
+    failover_manager = FailoverManager(
+        failure_threshold=3,
+        recovery_threshold=2
+    )
+
+    _realtime_failover_manager = failover_manager
+
+    # =====================================================
+    # 3. STOP EVENT
+    # =====================================================
+
+    stop_event = threading.Event()
+
+    _realtime_stop_event = stop_event
+
+    # =====================================================
+    # 4. NẠP SNAPSHOT
+    # =====================================================
+
+    try:
+
+        snapshot_loader = SnapshotLoader(
+            market_store=market_store
+        )
+
+        saved_count = snapshot_loader.load()
+
+        print(
+            f"[REALTIME] Snapshot đã nạp: "
+            f"{saved_count} mã"
+        )
+
+    except Exception as e:
+
+        print(
+            f"[REALTIME] Lỗi nạp snapshot: {e}"
+        )
+
+    # =====================================================
+    # 5. VIETCAP COLLECTOR
+    # =====================================================
+
+    print(
+        "[REALTIME] Khởi tạo Vietcap Collector..."
+    )
+
+    collector = VietcapCollector(
+
+        # -------------------------------------------------
+        # Dữ liệu realtime
+        # -------------------------------------------------
+
+        on_data=lambda data_type, data:
+            handle_realtime_data(
+                data_type,
+                data,
+                market_store,
+                failover_manager
+            ),
+
+        # -------------------------------------------------
+        # Trạng thái kết nối
+        # -------------------------------------------------
+
+        on_connection_change=lambda connected:
+            handle_vietcap_connection(
+                connected,
+                failover_manager
+            ),
+
+        # -------------------------------------------------
+        # Dùng chung MarketStore
+        # -------------------------------------------------
+
+        market_store=market_store
+    )
+
+    # =====================================================
+    # 6. LOAD SYMBOL
+    # =====================================================
+
+    collector.load_symbols()
+
+    if not collector.symbols:
+
+        raise RuntimeError(
+            "Không có mã cổ phiếu để chạy realtime."
+        )
+
+    print(
+        f"[REALTIME] Đã tải "
+        f"{len(collector.symbols)} mã."
+    )
+
+    _realtime_collector = collector
+
+    # =====================================================
+    # 7. DNSE FAILOVER THREAD
+    # =====================================================
+
+    failover_thread = threading.Thread(
+
+        target=run_dnse_failover,
+
+        args=(
+            failover_manager,
+            market_store,
+            collector.symbols,
+            stop_event
+        ),
+
+        daemon=True
+    )
+
+    failover_thread.start()
+
+    _realtime_threads.append(
+        failover_thread
+    )
+
+    print(
+        "[REALTIME] "
+        "Failover thread đã chạy background."
+    )
+
+    # =====================================================
+    # 8. VIETCAP WEBSOCKET THREAD
+    # =====================================================
+
+    def run_vietcap():
+
+        try:
+
+            print(
+                "[REALTIME] Đang khởi động "
+                "Vietcap WebSocket..."
+            )
+
+            collector.run()
+
+        except Exception as e:
+
+            print(
+                f"[REALTIME ERROR] "
+                f"Vietcap WebSocket: {e}"
+            )
+
+    vietcap_thread = threading.Thread(
+
+        target=run_vietcap,
+
+        daemon=True
+    )
+
+    vietcap_thread.start()
+
+    _realtime_threads.append(
+        vietcap_thread
+    )
+
+    print(
+        "[REALTIME] "
+        "✅ Vietcap realtime đã chạy background."
+    )
+
+    return market_store
+
+
+# =========================================================
+# LẤY MARKET STORE DÙNG CHUNG
+# =========================================================
+
+def get_realtime_market_store():
+
+    return _realtime_market_store
+
+
+# =========================================================
+# DỪNG REALTIME PIPELINE
+# =========================================================
+
+def stop_realtime_pipeline():
+
+    global _realtime_market_store
+    global _realtime_collector
+    global _realtime_failover_manager
+    global _realtime_stop_event
+    global _realtime_threads
+
+    print(
+        "[REALTIME] "
+        "Đang dừng realtime pipeline..."
+    )
+
+    # -----------------------------------------------------
+    # Dừng thread
+    # -----------------------------------------------------
+
+    if _realtime_stop_event is not None:
+
+        _realtime_stop_event.set()
+
+    # -----------------------------------------------------
+    # Dừng Vietcap
+    # -----------------------------------------------------
+
+    if _realtime_collector is not None:
+
+        try:
+
+            _realtime_collector.stop()
+
+        except Exception as e:
+
+            print(
+                f"[REALTIME] "
+                f"Lỗi đóng collector: {e}"
+            )
+
+    # -----------------------------------------------------
+    # Chờ các thread
+    # -----------------------------------------------------
+
+    for thread in _realtime_threads:
+
+        if thread.is_alive():
+
+            thread.join(
+                timeout=2
+            )
+
+    # -----------------------------------------------------
+    # Đóng MarketStore
+    # -----------------------------------------------------
+
+    if _realtime_market_store is not None:
+
+        try:
+
+            _realtime_market_store.close()
+
+        except Exception as e:
+
+            print(
+                f"[REALTIME] "
+                f"Lỗi đóng MarketStore: {e}"
+            )
+
+    # -----------------------------------------------------
+    # Reset trạng thái
+    # -----------------------------------------------------
+
+    _realtime_collector = None
+    _realtime_market_store = None
+    _realtime_failover_manager = None
+    _realtime_stop_event = None
+    _realtime_threads = []
+
+    print(
+        "[REALTIME] "
         "Đã dừng."
     )
 
@@ -356,15 +717,13 @@ def main():
     )
 
     # =====================================================
-    # STOP EVENT CHO BACKGROUND THREAD
+    # STOP EVENT
     # =====================================================
 
     stop_event = threading.Event()
 
     collector = None
-
     failover_thread = None
-
     history_thread = None
 
     try:
@@ -431,10 +790,6 @@ def main():
 
         collector = VietcapCollector(
 
-            # ---------------------------------------------
-            # DỮ LIỆU REALTIME
-            # ---------------------------------------------
-
             on_data=lambda data_type, data:
                 handle_realtime_data(
                     data_type,
@@ -442,10 +797,6 @@ def main():
                     market_store,
                     failover_manager
                 ),
-
-            # ---------------------------------------------
-            # TRẠNG THÁI KẾT NỐI
-            # ---------------------------------------------
 
             on_connection_change=lambda connected:
                 handle_vietcap_connection(
@@ -478,17 +829,20 @@ def main():
         )
 
         # =================================================
-        # 5. KHỞI ĐỘNG FAILOVER THREAD
+        # 5. DNSE FAILOVER THREAD
         # =================================================
 
         failover_thread = threading.Thread(
+
             target=run_dnse_failover,
+
             args=(
                 failover_manager,
                 market_store,
                 collector.symbols,
                 stop_event
             ),
+
             daemon=True
         )
 
@@ -500,15 +854,17 @@ def main():
         )
 
         # =================================================
-        # 6. KHỞI ĐỘNG HISTORICAL UPDATE
-        # TỰ ĐỘNG LẶP MỖI 24 GIỜ
+        # 6. HISTORICAL UPDATE
         # =================================================
 
         history_thread = threading.Thread(
+
             target=run_historical_update,
+
             args=(
                 stop_event,
             ),
+
             daemon=True
         )
 

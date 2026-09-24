@@ -1,7 +1,6 @@
 
 import sqlite3
 import threading
-from datetime import datetime
 from pathlib import Path
 
 
@@ -94,11 +93,7 @@ class MarketStore:
             return
 
         if timestamp is None:
-
-            timestamp = (
-                datetime.now().isoformat()
-            )
-
+            return
         with self.lock:
 
             # ---------------------------------------------

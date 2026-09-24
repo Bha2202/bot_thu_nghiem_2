@@ -970,7 +970,7 @@ class VietcapCollector:
             # -------------------------------------------------
             # INDEX KHÔNG ĐƯA VÀO PIPELINE HIỆN TẠI
             # -------------------------------------------------
-
+            print("🔥 VIETCAP REALTIME:", data, flush=True)
             if data_type == "index":
 
                 return

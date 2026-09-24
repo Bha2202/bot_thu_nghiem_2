@@ -669,12 +669,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 import html
 import os
 import re
+import pandas as pd
 
-import html
-import os
+from stock_bot.data_pipeline.main import get_realtime_market_store
+
 
 async def process_and_send_stock_signal(update: Update, ticker: str):
     """Tạo BÁO CÁO HOÀN CHỈNH: Ảnh Chart + SmartScore + TA chuẩn + Quản trị 2x ATR + Vị thế"""
+
     msg = await update.message.reply_text(f"🔍 Đang tra cứu {ticker}...")
     res = analyze_stock_signal(ticker)
 
@@ -694,124 +696,416 @@ async def process_and_send_stock_signal(update: Update, ticker: str):
     ta_info = res["ta"]
     fa_info = res.get("fa", {})
 
-    company_name = html.escape(str(comp.get('name', ticker)))
-    
-    # 1. Xử lý Ngành
-    sector_raw = comp.get('sector') or fa_info.get('sector') or fa_info.get('industry') or 'Khác'
-    if str(sector_raw).strip() in ['Chưa xác định', 'nan', 'None', '']:
-        sector_raw = 'Khác'
+    company_name = html.escape(str(comp.get("name", ticker)))
+
+    # =========================================================
+    # 1. XỬ LÝ NGÀNH
+    # =========================================================
+
+    sector_raw = (
+        comp.get("sector")
+        or fa_info.get("sector")
+        or fa_info.get("industry")
+        or "Khác"
+    )
+
+    if str(sector_raw).strip() in [
+        "Chưa xác định",
+        "nan",
+        "None",
+        ""
+    ]:
+        sector_raw = "Khác"
+
     sector_name = html.escape(str(sector_raw))
 
-    # 2. Xử lý Vốn hóa
-    cap_val = comp.get('market_cap', 0) or fa_info.get('market_cap', 0)
+    # =========================================================
+    # 2. XỬ LÝ VỐN HÓA
+    # =========================================================
+
+    cap_val = comp.get("market_cap", 0) or fa_info.get("market_cap", 0)
+
     if isinstance(cap_val, (int, float)) and cap_val > 0:
         cap_str = f"{cap_val:,.0f} tỷ"
     else:
-        cap_str = html.escape(str(comp.get('market_cap_str', 'Đang cập nhật')))
+        cap_str = html.escape(
+            str(comp.get("market_cap_str", "Đang cập nhật"))
+        )
 
-    # 3. Giá đóng cửa
-    price_nghin = res['price'] / 1000
+    # =========================================================
+    # 3. GIÁ ĐÓNG CỬA
+    # =========================================================
 
-    # 🟢 4. HÀM XL DẤU < > KHÔNG DÙNG REGEX (Đảm bảo 0% lỗi Python + Giữ nguyên thẻ <b>)
+    price_nghin = res["price"] / 1000
+
+    # =========================================================
+    # 3.1. LẤY GIÁ REALTIME - CHỈ ĐỂ HIỂN THỊ
+    # KHÔNG ĐỤNG VÀO CÁC PHÉP TÍNH BÊN DƯỚI
+    # =========================================================
+
+    realtime_price = None
+    realtime_time = None
+
+    try:
+        realtime_store = get_realtime_market_store()
+
+        if realtime_store is not None:
+            realtime_data = realtime_store.get_latest(ticker)
+
+            if realtime_data:
+                realtime_price = realtime_data.get("price")
+                realtime_time = realtime_data.get("timestamp")
+            print(
+            f"[DEBUG TIMESTAMP] "
+            f"price={realtime_price} | "
+            f"timestamp={realtime_time} | "
+            f"type={type(realtime_time)}"
+)
+    except Exception as e:
+        logger.warning(
+            f"⚠️ Không lấy được giá realtime {ticker}: {e}"
+        )
+
+    # Chuẩn hóa giá realtime chỉ để hiển thị
+
+    if realtime_price is not None:
+        try:
+            realtime_price = float(realtime_price)
+
+            if 0 < realtime_price < 2000:
+                realtime_price_display = realtime_price * 1000
+            else:
+                realtime_price_display = realtime_price
+
+        except Exception:
+            realtime_price_display = None
+    else:
+        realtime_price_display = None
+
+    # Format thời gian cập nhật
+    realtime_time_display = None
+
+    if realtime_time:
+        try:
+
+            dt = pd.to_datetime(realtime_time, utc=True)
+            # Chuyển UTC -> giờ Việt Nam (UTC+7)
+            dt = dt.tz_convert("Asia/Ho_Chi_Minh")
+
+            realtime_time_display = dt.strftime(
+                "%H:%M:%S %d/%m/%Y"
+            )
+
+        except Exception:
+            realtime_time_display = str(realtime_time)
+
+    if realtime_price_display is not None:
+        realtime_price_text = (
+            f"<b>{realtime_price_display:,.0f} đ</b>"
+        )
+    else:
+        realtime_price_text = "<i>Chưa có dữ liệu</i>"
+
+    if realtime_time_display:
+        realtime_time_text = (
+            f"<code>{html.escape(realtime_time_display)}</code>"
+        )
+    else:
+        realtime_time_text = "<i>Chưa có dữ liệu</i>"
+
+    # =========================================================
+    # 4. HÀM XỬ LÝ DẤU < >
+    # =========================================================
+
     def sanitize_tg_html(text):
         if not text:
             return ""
+
         text = str(text)
-        # Tạm thời giấu các thẻ HTML hợp lệ
-        text = text.replace("<b>", "__B_OPEN__").replace("</b>", "__B_CLOSE__")
-        text = text.replace("<code>", "__CODE_OPEN__").replace("</code>", "__CODE_CLOSE__")
-        # Escape các dấu < > còn lại (dấu so sánh toán học như < 1.0 hay > EMA20)
+
+        text = text.replace(
+            "<b>",
+            "__B_OPEN__"
+        ).replace(
+            "</b>",
+            "__B_CLOSE__"
+        )
+
+        text = text.replace(
+            "<code>",
+            "__CODE_OPEN__"
+        ).replace(
+            "</code>",
+            "__CODE_CLOSE__"
+        )
+
         text = html.escape(text)
-        # Khôi phục lại thẻ HTML
-        text = text.replace("__B_OPEN__", "<b>").replace("__B_CLOSE__", "</b>")
-        text = text.replace("__CODE_OPEN__", "<code>").replace("__CODE_CLOSE__", "</code>")
+
+        text = text.replace(
+            "__B_OPEN__",
+            "<b>"
+        ).replace(
+            "__B_CLOSE__",
+            "</b>"
+        )
+
+        text = text.replace(
+            "__CODE_OPEN__",
+            "<code>"
+        ).replace(
+            "__CODE_CLOSE__",
+            "</code>"
+        )
+
         return text
 
-    trend_clean = sanitize_tg_html(res.get('trend_str', ''))
-    pos_rec_clean = sanitize_tg_html(res.get('position_recommendation', 'Theo dõi tích lũy'))
-    ema_status_clean = sanitize_tg_html(ta_info.get('ema_status', ''))
-
-    # DỮ LIỆU ĐỊNH DẠNG CHUẨN GIAO DIỆN
-    caption_text = (
-        f"📊 <b>{res['ticker']} - {company_name} ({comp.get('exchange', 'HOSE')})</b>\n"
-        f"📅 Chốt phiên ngày: <code>{res['latest_date']}</code>\n"
-        f"-----------------------------------\n"
-        f"💰 Giá đóng cửa: <b>{price_nghin:,.2f}</b> (Tương đương <b>{res['price']:,.0f} đ</b>)\n"
-        f"Khuyến nghị: <b>{signal_emoji}</b>\n"
-        f"• Xu hướng: {trend_clean}\n"
-        f"• Vị thế khuyến nghị: {pos_rec_clean}\n\n"
-        f"🟣 <b>ĐIỂM SMARTSCORE: {score.get('tong', 'N/A')}/100</b>\n"
-        f"• Định giá: {score.get('dinh_gia', 'N/A')} | Chất lượng: {score.get('chat_luong', 'N/A')} | Động lượng: {score.get('dong_luong', 'N/A')}\n"
-        f"• Ngành: <code>{sector_name}</code> | Vốn hóa: <code>{cap_str}</code>\n"
+    trend_clean = sanitize_tg_html(
+        res.get("trend_str", "")
     )
 
-    # 5. Chỉ số tài chính
-    roe = fa_info.get('roe', fa_info.get('ROE', 'N/A'))
-    pe = fa_info.get('pe', fa_info.get('PE', 'N/A'))
-    eps = fa_info.get('eps_growth_yoy', fa_info.get('EPS_growth_yoy', 'N/A'))
-    period = fa_info.get('period', fa_info.get('PERIOD', ''))
-    period_str = f" ({period})" if period and period != 'N/A' else ""
+    pos_rec_clean = sanitize_tg_html(
+        res.get(
+            "position_recommendation",
+            "Theo dõi tích lũy"
+        )
+    )
 
-    caption_text += f"• Chỉ số tài chính{period_str}: ROE <code>{roe}%</code> | P/E <code>{pe}</code> | Tăng trưởng EPS <code>{eps}%</code>\n"
+    ema_status_clean = sanitize_tg_html(
+        ta_info.get("ema_status", "")
+    )
 
-    # 6. Phân tích kỹ thuật (TA) & Quản trị rủi ro
-    sl_pct = (res['stop_loss'] / res['price'] - 1) * 100
-    tp_pct = (res['take_profit'] / res['price'] - 1) * 100
+    # =========================================================
+    # DỮ LIỆU ĐỊNH DẠNG CHUẨN GIAO DIỆN
+    # =========================================================
+
+    caption_text = (
+        f"📊 <b>{res['ticker']} - {company_name} "
+        f"({comp.get('exchange', 'HOSE')})</b>\n"
+
+        f"📅 Chốt phiên ngày: "
+        f"<code>{res['latest_date']}</code>\n"
+
+        f"-----------------------------------\n"
+
+        f"💰 Giá đóng cửa: "
+        f"<b>{price_nghin:,.2f}</b> "
+        f"(Tương đương <b>{res['price']:,.0f} đ</b>)\n"
+
+        f"⚡ Giá hiện tại: "
+        f"{realtime_price_text}\n"
+
+        f"🕐 Cập nhật lúc: "
+        f"{realtime_time_text}\n"
+
+        f"Khuyến nghị: <b>{signal_emoji}</b>\n"
+
+        f"• Xu hướng: {trend_clean}\n"
+
+        f"• Vị thế khuyến nghị: "
+        f"{pos_rec_clean}\n\n"
+
+        f"🟣 <b>ĐIỂM SMARTSCORE: "
+        f"{score.get('tong', 'N/A')}/100</b>\n"
+
+        f"• Định giá: "
+        f"{score.get('dinh_gia', 'N/A')} | "
+        f"Chất lượng: "
+        f"{score.get('chat_luong', 'N/A')} | "
+        f"Động lượng: "
+        f"{score.get('dong_luong', 'N/A')}\n"
+
+        f"• Ngành: <code>{sector_name}</code> | "
+        f"Vốn hóa: <code>{cap_str}</code>\n"
+    )
+
+    # =========================================================
+    # 5. CHỈ SỐ TÀI CHÍNH
+    # =========================================================
+
+    roe = fa_info.get(
+        "roe",
+        fa_info.get("ROE", "N/A")
+    )
+
+    pe = fa_info.get(
+        "pe",
+        fa_info.get("PE", "N/A")
+    )
+
+    eps = fa_info.get(
+        "eps_growth_yoy",
+        fa_info.get("EPS_growth_yoy", "N/A")
+    )
+
+    period = fa_info.get(
+        "period",
+        fa_info.get("PERIOD", "")
+    )
+
+    period_str = (
+        f" ({period})"
+        if period and period != "N/A"
+        else ""
+    )
+
+    caption_text += (
+        f"• Chỉ số tài chính{period_str}: "
+        f"ROE <code>{roe}%</code> | "
+        f"P/E <code>{pe}</code> | "
+        f"Tăng trưởng EPS <code>{eps}%</code>\n"
+    )
+
+    # =========================================================
+    # 6. PHÂN TÍCH KỸ THUẬT & QUẢN TRỊ RỦI RO
+    # =========================================================
+
+    sl_pct = (
+        (res["stop_loss"] / res["price"] - 1)
+        * 100
+    )
+
+    tp_pct = (
+        (res["take_profit"] / res["price"] - 1)
+        * 100
+    )
 
     caption_text += (
         f"\n📈 <b>Phân tích kỹ thuật (TA):</b>\n"
-        f"• RSI(14): <code>{ta_info['rsi']}</code> | Khối lượng: <code>{ta_info['vol_ratio']}x MA20</code>\n"
-        f"• Trạng thái EMA: {ema_status_clean}\n\n"
-        f"🛡 <b>Quản trị vị thế (2x ATR):</b>\n"
-        f"• Cắt lỗ động: <code>{res['stop_loss']:,.0f} VNĐ</code> ({sl_pct:.1f}%)\n"
-        f"• Chốt lời kỳ vọng: <code>{res['take_profit']:,.0f} VNĐ</code> (+{tp_pct:.1f}%)\n"
-        f"• Tỷ lệ Risk/Reward: <code>1 : {res['rr_ratio']}</code>\n"
-    )
-    
-    # 7. Vị thế tài khoản
-    active_trade = res.get("active_trade")
-    if active_trade:
-        raw_entry = float(active_trade.get('entry_price', 0))
-        entry_price = raw_entry * 1000 if 0 < raw_entry < 2000 else raw_entry
-        volume = active_trade.get('volume', 100)
-        curr_price = res['price']
 
-        pnl_curr = ((curr_price - entry_price) / entry_price) * 100 if entry_price > 0 else 0.0
+        f"• RSI(14): "
+        f"<code>{ta_info['rsi']}</code> | "
+        f"Khối lượng: "
+        f"<code>{ta_info['vol_ratio']}x MA20</code>\n"
+
+        f"• Trạng thái EMA: "
+        f"{ema_status_clean}\n\n"
+
+        f"🛡 <b>Quản trị vị thế (2x ATR):</b>\n"
+
+        f"• Cắt lỗ động: "
+        f"<code>{res['stop_loss']:,.0f} VNĐ</code> "
+        f"({sl_pct:.1f}%)\n"
+
+        f"• Chốt lời kỳ vọng: "
+        f"<code>{res['take_profit']:,.0f} VNĐ</code> "
+        f"(+{tp_pct:.1f}%)\n"
+
+        f"• Tỷ lệ Risk/Reward: "
+        f"<code>1 : {res['rr_ratio']}</code>\n"
+    )
+
+    # =========================================================
+    # 7. VỊ THẾ TÀI KHOẢN
+    # GIỮ NGUYÊN
+    # =========================================================
+
+    active_trade = res.get("active_trade")
+
+    if active_trade:
+
+        raw_entry = float(
+            active_trade.get("entry_price", 0)
+        )
+
+        entry_price = (
+            raw_entry * 1000
+            if 0 < raw_entry < 2000
+            else raw_entry
+        )
+
+        volume = active_trade.get("volume", 100)
+
+        curr_price = res["price"]
+
+        pnl_curr = (
+            ((curr_price - entry_price) / entry_price) * 100
+            if entry_price > 0
+            else 0.0
+        )
+
         pnl_icon = "🟢" if pnl_curr >= 0 else "🔴"
         pnl_sign = "+" if pnl_curr >= 0 else ""
 
         caption_text += (
             f"\n📌 <b>VỊ THẾ ĐANG NẮM GIỮ:</b>\n"
-            f"• Khối lượng: <b>{volume:,} CP</b>\n"
-            f"• Giá vốn: <b>{entry_price:,.0f} VNĐ</b>\n"
-            f"• Giá hiện tại: <b>{curr_price:,.0f} VNĐ</b>\n"
-            f"• Lãi/Lỗ hiện tại: {pnl_icon} <b>{pnl_sign}{pnl_curr:.2f}%</b>"
-        )
-    else:
-        caption_text += f"\n📌 <b>VỊ THẾ TÀI KHOẢN:</b> Chưa sở hữu"
 
-    # 8. Gửi ảnh + Caption
+            f"• Khối lượng: "
+            f"<b>{volume:,} CP</b>\n"
+
+            f"• Giá vốn: "
+            f"<b>{entry_price:,.0f} VNĐ</b>\n"
+
+            f"• Giá hiện tại: "
+            f"<b>{curr_price:,.0f} VNĐ</b>\n"
+
+            f"• Lãi/Lỗ hiện tại: "
+            f"{pnl_icon} "
+            f"<b>{pnl_sign}{pnl_curr:.2f}%</b>"
+        )
+
+    else:
+        caption_text += (
+            f"\n📌 <b>VỊ THẾ TÀI KHOẢN:</b> "
+            f"Chưa sở hữu"
+        )
+
+    # =========================================================
+    # 8. GỬI ẢNH + CAPTION
+    # =========================================================
+
     chart_file = None
+
     try:
-        chart_file = generate_candlestick_chart(res["df"], ticker)
-        with open(chart_file, 'rb') as photo:
-            await update.message.reply_photo(photo=photo, caption=caption_text, parse_mode="HTML")
+
+        chart_file = generate_candlestick_chart(
+            res["df"],
+            ticker
+        )
+
+        with open(chart_file, "rb") as photo:
+
+            await update.message.reply_photo(
+                photo=photo,
+                caption=caption_text,
+                parse_mode="HTML"
+            )
+
         await msg.delete()
+
     except Exception as e:
-        logger.error(f"Lỗi gửi đồ thị mã {ticker}: {e}")
+
+        logger.error(
+            f"Lỗi gửi đồ thị mã {ticker}: {e}"
+        )
+
         try:
-            await msg.edit_text(caption_text, parse_mode="HTML")
+
+            await msg.edit_text(
+                caption_text,
+                parse_mode="HTML"
+            )
+
         except Exception:
-            # Nếu HTML vẫn lỗi thì loại bỏ thẻ gửi text thuần để chống crash
-            import re
-            plain_text = re.sub(r'<[^>]+>', '', caption_text)
-            await update.message.reply_text(plain_text)
+
+            plain_text = re.sub(
+                r"<[^>]+>",
+                "",
+                caption_text
+            )
+
+            await update.message.reply_text(
+                plain_text
+            )
+
             try:
                 await msg.delete()
             except Exception:
                 pass
+
     finally:
+
         if chart_file and os.path.exists(chart_file):
+
             try:
                 os.remove(chart_file)
             except Exception:

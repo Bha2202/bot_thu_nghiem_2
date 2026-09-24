@@ -44,9 +44,16 @@ class VietcapParser:
                         data
                     )
                 )
-
+                print("\n===== RAW VIETCAP =====")
+                for item in fields:
+                    print(
+                        f"FIELD {item['field']} | "
+                        f"WIRE {item['wire_type']} | "
+                        f"VALUE {repr(item['value'])}"
+                    )
+                print("=======================\n")
                 if not fields:
-                    return []
+                                    return []
 
                 symbol = None
                 ticker = None
